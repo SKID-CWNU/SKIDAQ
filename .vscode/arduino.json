@@ -1,0 +1,6 @@
+{
+    "sketch": "PicoMain\\PicoMain.ino",
+    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default",
+    "board": "rp2040:rp2040:rpipico",
+    "port": "COM12"
+}
