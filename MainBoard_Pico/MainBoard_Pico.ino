@@ -16,9 +16,9 @@ void loop() {
     upShift = digitalRead(UPS);
     downShift = digitalRead(DWS);
     if (upShift == 0) {
-        Serial.println("upShift");
-        
-        upShift = 1;
+        UpShiftSeq();
+
+
         delay(200);
     }
     if (downShift == 0) {
@@ -42,19 +42,26 @@ private:
     int RPMread;
     int END_gear;
     int OG_Gear;
+    int SeqState;
 public:
-    void UpShift(RPMread, OG_Gear, END_gear);
-    void DownShift(RPMread, OG_Gear, END_gear);
+    void UpShiftSeq(RPMread, OG_Gear, END_gear);
+    void DownShiftSeq(RPMread, OG_Gear, END_gear);
     void RPMChk();
     void GearChk();
     void EngineChk();
 
 };
-void Tachometer::UpShift(RPMread, OG_Gear, END_gear) {
-
+void Tachometer::UpShiftSeq(RPMread, OG_Gear, END_gear) {
+    Serial.println("UpShift_Seq. Started");
+    if (RPMread > MIN_Shift_RPM) {
+        digitalRead();
+    } else if (RPMread =< MIN_Shift_RPM) {
+        Serial.println("Error: Upshift failed.");
+        Serial.print("  Target: %d to %d. Reason: Low(<200) RPM - %d RPM.", OG_Gear, END_gear, RPMread);
+    }
 }
 
-void Tachometer::DownShift(RPMread, OG_Gear, END_gear) {
+void Tachometer::DownShiftSeq(RPMread, OG_Gear, END_gear) {
     
 }
 
