@@ -7,19 +7,22 @@ const int DWS = 19; // Down-Shift Switch IN
 const int US = 14; // Solenoid Valve Out for Upshift
 const int DS = 15; // Solenoid Valve Out for Downshift
 const int Dyno = 21; // Signal Output to DynoJet Module
+int TachoPin = 26; // Tachometer Input with ADC
 int upShift = 1; // Up Shifting State
 int downShift = 1; // Down Shifting State
 
 void setup() {
-    delay(2000);
-    Serial.begin(115200);
     // Set GPIO    
-    pinMode(UPS,INPUT_PULLUP);
+    pinMode(TachoPin, INPUT);
+    pinMode(UPS,INPUT_PULLUP); // Connection: GND & GPIO (as Internal Pullup Resistor is enabled.)
     pinMode(DWS,INPUT_PULLUP);
-    pinMode(US, OUTPUT);
+    pinMode(US, OUTPUT);  // Goes to the Relayw
     pinMode(DS, OUTPUT);
     pinMode(Dyno, OUTPUT);
-    
+
+    // Startup Sequence
+    delay(2000);
+    Serial.begin(115200);
     digitalWrite(25, HIGH); // Turn on the Onboard LED for Indcation.
     Serial.print("Shifting Test");
     delay(7000);
@@ -31,14 +34,11 @@ void loop() {
     downShift = digitalRead(DWS);
     if (upShift == 0) {
         UpShiftSeq();
-
-
         delay(200);
     }
     if (downShift == 0) {
-        Serial.println("downShift");
-        downShift = 1;
-          delay(200);
+        DownShiftSeq();
+        delay(200);
     }
     delay(100);
    
@@ -50,33 +50,44 @@ class Tachometer {
 
 private:
     enum {
-        MIN_Shift_RPM = 500,
-        Neutral_1st = 1
+        MIN_Shift_RPM = 500
     };
+    int Neutral_State;
     int RPMread;
-    int END_gear;
-    int OG_Gear;
     int SeqState;
 public:
-    void UpShiftSeq(RPMread, OG_Gear, END_gear);
-    void DownShiftSeq(RPMread, OG_Gear, END_gear);
+    void UpShiftSeq();
+    void DownShiftSeq();
     void RPMChk();
     void GearChk();
     void EngineChk();
 
 };
-void Tachometer::UpShiftSeq(RPMread, OG_Gear, END_gear) {
+void RPMChk() {
+    analogRead(TachoPin)
+}
+
+void Tachometer::UpShiftSeq() {
     Serial.println("UpShift_Seq. Started");
+    RPMread = RPMChk();
     if (RPMread > MIN_Shift_RPM) {
         digitalWrite(US, HIGH);
 
     } else if (RPMread =< MIN_Shift_RPM) {
         Serial.println("Error: Upshift failed.");
-        Serial.print("  Target: %d to %d. Reason: Low(<200) RPM - %d RPM.", OG_Gear, END_gear, RPMread);
+        Serial.print(" Reason: Low(<200) RPM - %d RPM.", RPMread);
     }
 }
 
-void Tachometer::DownShiftSeq(RPMread, OG_Gear, END_gear) {
-    
+void Tachometer::DownShiftSeq() {
+    Serial.println("DownShift_Seq. Started");
+    RPMread = RPMChk();
+    if (RPMread > MIN_Shift_RPM) {
+        digitalWrite(DS, HIGH);
+
+    } else if (RPMread =< MIN_Shift_RPM) {
+        Serial.println("Error: Downshift failed.");
+        Serial.print(" Reason: Low(<200) RPM - %d RPM.", RPMread);
+    }
 }
 
