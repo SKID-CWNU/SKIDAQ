@@ -1,15 +1,27 @@
-const int UPS = 14; // UP-Shift Switch
-const int DWS = 15; // Down-Shift Switch
+// Raspberry Pi Pico based Steering Wheel Main Circuit code //
+// Solenoid Valve Controlled QuickShift Interface //
+// Author: Lim Chae Won //
+
+const int UPS = 18; // UP-Shift Switch IN
+const int DWS = 19; // Down-Shift Switch IN
+const int US = 14; // Solenoid Valve Out for Upshift
+const int DS = 15; // Solenoid Valve Out for Downshift
 int upShift = 1; // Up Shifting State
 int downShift = 1; // Down Shifting State
 
 void setup() {
     delay(2000);
     Serial.begin(115200);
+    // Set GPIO    
     pinMode(UPS,INPUT_PULLUP);
     pinMode(DWS,INPUT_PULLUP);
+    pinMode(US, OUTPUT);
+    pinMode(DS, OUTPUT);
+    
+    digitalWrite(25, HIGH); // Turn on the Onboard LED for Indcation.
     Serial.print("Shifting Test");
     delay(7000);
+    digitalWrite(25, LOW);
 }
 
 void loop() {
