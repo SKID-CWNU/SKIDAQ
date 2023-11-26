@@ -3,5 +3,8 @@
     "files.associations": {
         "*.cpp": "cpp",
         "*.tcc": "cpp"
-    }
+    },
+    "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
+        "clang-diagnostic-error"
+    ]
 }
