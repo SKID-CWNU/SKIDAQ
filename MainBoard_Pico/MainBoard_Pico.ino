@@ -6,6 +6,7 @@ const int UPS = 18; // UP-Shift Switch IN
 const int DWS = 19; // Down-Shift Switch IN
 const int US = 14; // Solenoid Valve Out for Upshift
 const int DS = 15; // Solenoid Valve Out for Downshift
+const int Dyno = 21; // Signal Output to DynoJet Module
 int upShift = 1; // Up Shifting State
 int downShift = 1; // Down Shifting State
 
@@ -17,6 +18,7 @@ void setup() {
     pinMode(DWS,INPUT_PULLUP);
     pinMode(US, OUTPUT);
     pinMode(DS, OUTPUT);
+    pinMode(Dyno, OUTPUT);
     
     digitalWrite(25, HIGH); // Turn on the Onboard LED for Indcation.
     Serial.print("Shifting Test");
@@ -66,7 +68,8 @@ public:
 void Tachometer::UpShiftSeq(RPMread, OG_Gear, END_gear) {
     Serial.println("UpShift_Seq. Started");
     if (RPMread > MIN_Shift_RPM) {
-        digitalRead();
+        digitalWrite(US, HIGH);
+
     } else if (RPMread =< MIN_Shift_RPM) {
         Serial.println("Error: Upshift failed.");
         Serial.print("  Target: %d to %d. Reason: Low(<200) RPM - %d RPM.", OG_Gear, END_gear, RPMread);
