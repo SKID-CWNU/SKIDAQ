@@ -119,5 +119,8 @@ void loop()
         cbr600rr.DownShiftSeq();
         delay(200);
     }
+    if (digitalRead(NEU_I) == LOW) {
+        cbr600rr.Netrual();
+    }
     delay(100);
 }
