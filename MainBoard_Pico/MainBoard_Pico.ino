@@ -2,8 +2,10 @@
 // Solenoid Valve Controlled QuickShift Interface //
 // Author: Lim Chae Won //
 
-const int UPS = 18;  // UP-Shift Switch IN
-const int DWS = 19;  // Down-Shift Switch IN
+const int DRS_I = 16;  // DRS Switch IN
+const int NEU_I = 17;  // Neutral Switch IN
+const int UPS_I = 18;  // UP-Shift Switch IN
+const int DWS_I = 19;  // Down-Shift Switch IN
 const int US = 14;   // Solenoid Valve Out for Upshift
 const int DS = 15;   // Solenoid Valve Out for Downshift
 const int Dyno = 21; // Signal Output to DynoJet Module
@@ -14,7 +16,6 @@ int downShift = 1;   // Down Shifting State
 using namespace std;
 class Tachometer
 {
-
 private:
     enum
     {
@@ -34,6 +35,7 @@ public:
 int Tachometer::RPMChk()
 {
     RPMread = analogRead(TachoPin);
+    Serial.print(RPMread);
     return RPMread;
 }
 
@@ -87,8 +89,10 @@ void setup()
 {
     // Set GPIO
     pinMode(TachoPin, INPUT);
-    pinMode(UPS, INPUT_PULLUP); // Connection: GND & GPIO (as Internal Pullup Resistor is enabled.)
-    pinMode(DWS, INPUT_PULLUP);
+    pinMode(DRS_I, INPUT_PULLUP);  // Connection: GND & GPIO (as Internal Pullup Resistor is enabled.)
+    pinMode(NEU_I, INPUT_PULLUP);
+    pinMode(UPS_I, INPUT_PULLUP);
+    pinMode(DWS_I, INPUT_PULLUP);
     pinMode(US, OUTPUT); // Goes to the Relay
     pinMode(DS, OUTPUT);
     pinMode(Dyno, OUTPUT);
