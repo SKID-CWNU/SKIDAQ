@@ -95,7 +95,7 @@ void setup()
     pinMode(DWS_I, INPUT_PULLUP);
     pinMode(US, OUTPUT); // Goes to the Relay
     pinMode(DS, OUTPUT);
-    pinMode(Dyno, OUTPUT);
+    pinMode(Dyno, OUTPUT); //
 
     // Startup Sequence
     delay(2000);
@@ -107,8 +107,8 @@ void setup()
 }
 void loop()
 {
-    upShift = digitalRead(UPS);
-    downShift = digitalRead(DWS);
+    upShift = digitalRead(UPS_I);
+    downShift = digitalRead(DWS_I);
     if (upShift == 0)
     {
         cbr600rr.UpShiftSeq();
