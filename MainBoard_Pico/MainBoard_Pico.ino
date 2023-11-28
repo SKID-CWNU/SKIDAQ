@@ -28,8 +28,7 @@ public:
     void UpShiftSeq();
     void DownShiftSeq();
     int RPMChk();
-    void GearChk();
-    void EngineChk();
+    void Netrual();
 };
 
 int Tachometer::RPMChk()
@@ -38,11 +37,15 @@ int Tachometer::RPMChk()
     return RPMread;
 }
 
+void Tachometer::Netrual() {
+    digitalWrite(downShift, HIGH);
+}
+
 void Tachometer::UpShiftSeq()
 {
     Serial.println("UpShift_Seq. Started");
     // Tachometer::RPMChk();
-    RPMread = 600;
+    RPMread = 600; // Only for Testing
     if (RPMread > MIN_Shift_RPM)
     {
         digitalWrite(US, HIGH);
@@ -62,7 +65,7 @@ void Tachometer::DownShiftSeq()
 {
     Serial.println("DownShift_Seq. Started");
     // Tachometer::RPMChk();
-    RPMread = 600;
+    RPMread = 600; // Only for Testing
     if (RPMread > MIN_Shift_RPM)
     {
         digitalWrite(DS, HIGH);
@@ -86,7 +89,7 @@ void setup()
     pinMode(TachoPin, INPUT);
     pinMode(UPS, INPUT_PULLUP); // Connection: GND & GPIO (as Internal Pullup Resistor is enabled.)
     pinMode(DWS, INPUT_PULLUP);
-    pinMode(US, OUTPUT); // Goes to the Relayw
+    pinMode(US, OUTPUT); // Goes to the Relay
     pinMode(DS, OUTPUT);
     pinMode(Dyno, OUTPUT);
 
