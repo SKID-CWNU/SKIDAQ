@@ -28,7 +28,7 @@ jobs:
         include:
           - arduino-platform: "arduino:mbed_nano"
             fqbn: "arduino:mbed_nano:nanorp2040connect"
-            arduino-platform: "esp32:esp32"
+          - arduino-platform: "esp32:esp32"
             fqbn: "esp32:esp32:esp32s3:JTAGAdapter=default,PSRAM=enabled,FlashMode=qio,FlashSize=4M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none"
 
 
