@@ -1,4 +1,4 @@
-            - name: arduino/arduino-lint-action
+- name: arduino/arduino-lint-action
   # You may pin to the exact commit or the version.
   # uses: arduino/arduino-lint-action@e9a30879471dcbf7d9fe3481b26e60b652cca297
   uses: arduino/arduino-lint-action@v1.0.2
@@ -23,7 +23,7 @@
     official: # optional, default is false
     # GitHub access token used to get information from the GitHub API.
     token: # optional, default is ${{ github.token }}
-                      - name: Setup Arduino CLI
+- name: Setup Arduino CLI
   # You may pin to the exact commit or the version.
   # uses: arduino/setup-arduino-cli@28065f7e0317cc0dde372e0c11631963d743ee3b
   uses: arduino/setup-arduino-cli@v1.1.2
