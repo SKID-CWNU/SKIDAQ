@@ -58,5 +58,5 @@ jobs:
       # in the build matrix.
       - name: Compile MainBoard Sketch
         run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./MainBoard_Pico/MainBoard_Pico.ino
-     - name: Compile Display Sketch
+      - name: Compile Display Sketch
         run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./Display/Display.ino
