@@ -1,7 +1,8 @@
 {
     "sketch": "MainBoard_Pico\\MainBoard_Pico.ino",
-    "board": "arduino:mbed_nano:nanorp2040connect",
+    "board": "arduino:avr:nano",
     "port": "COM12",
     "output": "../build",
-    "intelliSenseGen": "global"
+    "intelliSenseGen": "global",
+    "configuration": "cpu=atmega328"
 }
