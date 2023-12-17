@@ -57,6 +57,6 @@ jobs:
       # Finally, we compile the sketch, using the FQBN that was set
       # in the build matrix.
       - name: Compile MainBoard Sketch
-        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./MainBoard_Pico/MainBoard_Pico.ino
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./Code/MainBoard_Pico/MainBoard_Pico.ino
       - name: Compile Display Sketch
-        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./Display/Display.ino
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./Code/Display/Display.ino
