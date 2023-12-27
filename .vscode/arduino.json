@@ -1,8 +1,9 @@
 {
-    "sketch": "MainBoard_Pico\\MainBoard_Pico.ino",
-    "board": "arduino:avr:nano",
-    "port": "COM12",
+    "sketch": "code\\MainBoard_CAN\\MainBoard_CAN.ino",
+    "board": "rp2040:rp2040:rpipico",
+    "port": "COM9",
     "output": "../build",
     "intelliSenseGen": "global",
-    "configuration": "cpu=atmega328"
+    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default",
+    "programmer": "esptool"
 }

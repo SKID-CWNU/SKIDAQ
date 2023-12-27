@@ -12,7 +12,7 @@
 #define TFT_BL 2
 #define GFX_BL DF_GFX_BL // default backlight pin, you may replace DF_GFX_BL to actual backlight pin
 
-#define SERIAL_BAUD 115200
+#define SERIAL_BAUD 9600
 HardwareSerial cardSerial(1);//Declare serial port 1
 unsigned char buffer[256]; // buffer array for data recieve over serial port
 int count_1 = 0;   // counter for buffer array
@@ -142,7 +142,8 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println("LVGL Widgets Demo");
-  cardSerial.begin(SERIAL_BAUD, SERIAL_8N1, 18, 17);//4.3 /*Serial Port Initializing 1*/18-RX\17-TX
+  cardSerial.begin(SERIAL_BAUD, SERIAL_8N1, 18, 17); //4.3 /*Serial Port Initializing 1*/18-RX\17-TX 
+// CONNECT 17 - RX, 18 - TX ON rpi Pico
 
 #if defined(Display_50) || defined(Display_70)
   //IO Port Pins
@@ -233,8 +234,6 @@ void loop()
     clearBufferArray();              // call clearBufferArray function to clear the storaged data from the array
     count_1 = 0;                       // set counter of while loop to zero
   }
-  if (Serial.available())            // if data is available on hardwareserial port ==> data is comming from PC or notebook
-    cardSerial.write(Serial.read());       // write it to the SoftSerial shield
   while(1)
   {
 #ifdef USE_UI
