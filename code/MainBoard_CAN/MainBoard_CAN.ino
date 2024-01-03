@@ -1,82 +1,122 @@
-#include <DHT_U.h>
-#include <DHT.h>
-#include <CAN.h>
+// Raspberry Pi Pico based Steering Wheel Main Receiver code //
+// Solenoid Valve Controlled QuickShift Interface //
+// Author: Lim Chae Won //
 
-#define DHTPIN 18
-// #define DHTTYPE DHT11   // DHT 11
-#define DHTTYPE DHT22 // DHT 22  (AM2302), AM2321
-// #define DHTTYPE DHT21   // DHT 21 (AM2301)
+#include <SPI.h>
+#include <can-serial.h>
+#include <mcp_can.h>
+#include <mcp2515_can_dfs.h>
+#include <mcp2515_can.h>
+#include <mcp2518fd_can_dfs.h>
+#include <mcp2518fd_can.h>
+#include <SoftwareSerial.h>
 
-DHT dht(DHTPIN, DHTTYPE);
+#define CAN_2515
+// #define CAN_2518FD
+
+// Set SPI CS Pin according to your hardware
+
+#if defined(SEEED_WIO_TERMINAL) && defined(CAN_2518FD)
+// For Wio Terminal w/ MCP2518FD RPi Hat：
+// Channel 0 SPI_CS Pin: BCM 8
+// Channel 1 SPI_CS Pin: BCM 7
+// Interupt Pin: BCM25
+const int SPI_CS_PIN = BCM8;
+const int CAN_INT_PIN = BCM25;
+#else
+
+// For Arduino MCP2515 Hat:
+// the cs pin of the version after v1.1 is default to D9
+// v0.9b and v1.0 is default D10
+const int SPI_CS_PIN = 22;
+const int CAN_INT_PIN = 20;
+#endif
+
+#ifdef CAN_2518FD
+#include "mcp2518fd_can.h"
+mcp2518fd CAN(SPI_CS_PIN); // Set CS pin
+
+// To TEST MCP2518FD CAN2.0 data transfer
+#define MAX_DATA_SIZE 8
+// To TEST MCP2518FD CANFD data transfer, uncomment below lines
+// #undef  MAX_DATA_SIZE
+// #define MAX_DATA_SIZE 64
+
+#endif
+
+#ifdef CAN_2515
+#include "mcp2515_can.h"
+mcp2515_can CAN(SPI_CS_PIN); // Set CS pin
+#define MAX_DATA_SIZE 8
+#endif
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
     while (!Serial)
-        ;
-
-    Serial.println("CAN Sender");
-
-    // start the CAN bus at 500 kbps
-    if (!CAN.begin(500E3))
     {
-        Serial.println("Starting CAN failed!");
-        while (1)
-            ;
     }
 
-    dht.begin();
+#if MAX_DATA_SIZE > 8
+    /*
+     * To compatible with MCP2515 API,
+     * default mode is CAN_CLASSIC_MODE
+     * Now set to CANFD mode.
+     */
+    CAN.setMode(CAN_NORMAL_MODE);
+#endif
+
+    while (CAN_OK != CAN.begin(CAN_500KBPS))
+    { // init can bus : baudrate = 500k
+        Serial.println(F("CAN init fail, retry..."));
+        delay(100);
+    }
+    Serial.println(F("CAN init ok!"));
 }
+
+uint32_t id;
+uint8_t type; // bit0: ext, bit1: rtr
+uint8_t len;
+byte cdata[MAX_DATA_SIZE] = {0};
 
 void loop()
 {
-    // Wait a few seconds between measurements.
-    delay(2000);
-
-    // Reading temperature or humidity takes about 250 milliseconds!
-    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-    float h = dht.readHumidity();
-    // Read temperature as Celsius (the default)
-    float t = dht.readTemperature();
-    // Read temperature as Fahrenheit (isFahrenheit = true)
-    float f = dht.readTemperature(true);
-
-    // Check if any reads failed and exit early (to try again).
-    if (isnan(h) || isnan(t) || isnan(f))
+    // check if data coming
+    if (CAN_MSGAVAIL != CAN.checkReceive())
     {
-        Serial.println(F("Failed to read from DHT sensor!"));
         return;
     }
 
-    // Compute heat index in Fahrenheit (the default)
-    float hif = dht.computeHeatIndex(f, h);
-    // Compute heat index in Celsius (isFahreheit = false)
-    float hic = dht.computeHeatIndex(t, h, false);
-    // send packet: id is 11 bits, packet can contain up to 8 bytes of data
-    Serial.print("Sending packet ... ");
+    char prbuf[32 + MAX_DATA_SIZE * 3];
+    int i, n;
 
-    CAN.beginPacket(0x12);
-    CAN.beginPacket(0x12);
-    CAN.write('h');
-    CAN.write('e');
-    CAN.write('l');
-    CAN.write('l');
-    CAN.write('o');
-    CAN.endPacket();
+    unsigned long t = millis();
+    // read data, len: data length, buf: data buf
+    CAN.readMsgBuf(&len, cdata);
 
-    Serial.println("done");
+    id = CAN.getCanId();
+    type = (CAN.isExtendedFrame() << 0) |
+           (CAN.isRemoteRequest() << 1);
+    /*
+     * MCP2515(or this driver) could not handle properly
+     * the data carried by remote frame
+     */
 
-    delay(1000);
+    n = sprintf(prbuf, "%04lu.%03d ", t / 1000, int(t % 1000));
+    /* Displayed type:
+     *
+     * 0x00: standard data frame
+     * 0x02: extended data frame
+     * 0x30: standard remote frame
+     * 0x32: extended remote frame
+     */
+    static const byte type2[] = {0x00, 0x02, 0x30, 0x32};
+    n += sprintf(prbuf + n, "RX: [%08lX](%02X) ", (unsigned long)id, type2[type]);
+    // n += sprintf(prbuf, "RX: [%08lX](%02X) ", id, type);
 
-    /*Serial.print(F("Humidity: "));
-    Serial.print(h);
-    Serial.print(F("%  Temperature: "));
-    Serial.print(t);
-    Serial.print(F("°C "));
-    Serial.print(f);
-    Serial.print(F("°F  Heat index: "));
-    Serial.print(hic);
-    Serial.print(F("°C "));
-    Serial.print(hif);
-    Serial.println(F("°F"));*/
+    for (i = 0; i < len; i++)
+    {
+        n += sprintf(prbuf + n, "%02X ", cdata[i]);
+    }
+    Serial.println(prbuf);
 }
