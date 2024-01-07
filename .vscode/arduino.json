@@ -4,6 +4,5 @@
     "port": "COM12",
     "output": "../build",
     "intelliSenseGen": "global",
-    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default",
-    "programmer": "esptool"
+    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=All,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
 }
