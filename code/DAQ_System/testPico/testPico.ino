@@ -1,74 +1,124 @@
-// Example testing sketch for various DHT humidity/temperature sensors
-// Written by ladyada, public domain
+//——————————————————————————————————————————————————————————————————————————————
+//  ACAN2515 Demo in loopback mode, for the Raspberry Pi Pico
+//  Thanks to Duncan Greenwood for providing this sample sketch
+//——————————————————————————————————————————————————————————————————————————————
 
-// REQUIRES the following Arduino libraries:
-// - DHT Sensor Library: https://github.com/adafruit/DHT-sensor-library
-// - Adafruit Unified Sensor Lib: https://github.com/adafruit/Adafruit_Sensor
+#ifndef ARDUINO_ARCH_RP2040
+#error "Select a Raspberry Pi Pico board"
+#endif
 
-#include "DHT.h"
+//——————————————————————————————————————————————————————————————————————————————
 
-#define DHTPIN 10    // Digital pin connected to the DHT sensor
-// Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
-// Pin 15 can work but DHT must be disconnected during program upload.
+#include <ACAN2515.h>
 
-// Uncomment whatever type you're using!
-//#define DHTTYPE DHT11   // DHT 11
-#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
-//#define DHTTYPE DHT21   // DHT 21 (AM2301)
+//——————————————————————————————————————————————————————————————————————————————
+// The Pico has two SPI peripherals, SPI and SPI1. Either (or both) can be used.
+// The are no default pin assignments so they must be set explicitly.
+// Testing was done with Earle Philhower's arduino-pico core:
+// https://github.com/earlephilhower/arduino-pico
+//——————————————————————————————————————————————————————————————————————————————
 
-// Connect pin 1 (on the left) of the sensor to +5V
-// NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
-// to 3.3V instead of 5V!
-// Connect pin 2 of the sensor to whatever your DHTPIN is
-// Connect pin 3 (on the right) of the sensor to GROUND (if your sensor has 3 pins)
-// Connect pin 4 (on the right) of the sensor to GROUND and leave the pin 3 EMPTY (if your sensor has 4 pins)
-// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
+static const byte MCP2515_SCK  = 18 ; // SCK input of MCP2515
+static const byte MCP2515_MOSI = 19 ; // SDI input of MCP2515
+static const byte MCP2515_MISO = 16 ; // SDO output of MCP2515
 
-// Initialize DHT sensor.
-// Note that older versions of this library took an optional third parameter to
-// tweak the timings for faster processors.  This parameter is no longer needed
-// as the current DHT reading algorithm adjusts itself to work on faster procs.
-DHT dht(DHTPIN, DHTTYPE);
+static const byte MCP2515_CS  = 17 ;  // CS input of MCP2515 (adapt to your design)
+static const byte MCP2515_INT = 20 ;  // INT output of MCP2515 (adapt to your design)
 
-void setup() {
-  Serial.begin(9600);
-  Serial.println(F("DHTxx test!"));
+//——————————————————————————————————————————————————————————————————————————————
+//  MCP2515 Driver object
+//——————————————————————————————————————————————————————————————————————————————
 
-  dht.begin();
-}
+ACAN2515 can (MCP2515_CS, SPI, MCP2515_INT) ;
 
-void loop() {
-  // Wait a few seconds between measurements.
-  delay(2000);
+//——————————————————————————————————————————————————————————————————————————————
+//  MCP2515 Quartz: adapt to your design
+//——————————————————————————————————————————————————————————————————————————————
 
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  float h = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-  float t = dht.readTemperature();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  float f = dht.readTemperature(true);
+static const uint32_t QUARTZ_FREQUENCY = 20UL * 1000UL * 1000UL ; // 20 MHz
 
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(h) || isnan(t) || isnan(f)) {
-    Serial.println(F("Failed to read from DHT sensor!"));
-    return;
+//——————————————————————————————————————————————————————————————————————————————
+//   SETUP
+//——————————————————————————————————————————————————————————————————————————————
+
+void setup () {
+  //--- Switch on builtin led
+  pinMode (LED_BUILTIN, OUTPUT) ;
+  digitalWrite (LED_BUILTIN, HIGH) ;
+  //--- Start serial
+  Serial.begin (115200) ;
+  //--- Wait for serial (blink led at 10 Hz during waiting)
+  while (!Serial) {
+    delay (50) ;
+    digitalWrite (LED_BUILTIN, !digitalRead (LED_BUILTIN)) ;
   }
-
-  // Compute heat index in Fahrenheit (the default)
-  float hif = dht.computeHeatIndex(f, h);
-  // Compute heat index in Celsius (isFahreheit = false)
-  float hic = dht.computeHeatIndex(t, h, false);
-
-  Serial.print(F("Humidity: "));
-  Serial.print(h);
-  Serial.print(F("%  Temperature: "));
-  Serial.print(t);
-  Serial.print(F("°C "));
-  Serial.print(f);
-  Serial.print(F("°F  Heat index: "));
-  Serial.print(hic);
-  Serial.print(F("°C "));
-  Serial.print(hif);
-  Serial.println(F("°F"));
+  //--- There are no default SPI pins so they must be explicitly assigned
+  SPI.setSCK(MCP2515_SCK);
+  SPI.setTX(MCP2515_MOSI);
+  SPI.setRX(MCP2515_MISO);
+  SPI.setCS(MCP2515_CS);
+  //--- Begin SPI
+  SPI.begin () ;
+  //--- Configure ACAN2515
+  Serial.println ("Configure ACAN2515") ;
+  ACAN2515Settings settings (QUARTZ_FREQUENCY, 125UL * 1000UL) ; // CAN bit rate 125 kb/s
+  settings.mRequestedMode = ACAN2515Settings:: NormalMode; // Select Normal mode
+  const uint16_t errorCode = can.begin (settings, [] { can.isr () ; }) ;
+  if (errorCode == 0) {
+    Serial.print ("Bit Rate prescaler: ") ;
+    Serial.println (settings.mBitRatePrescaler) ;
+    Serial.print ("Propagation Segment: ") ;
+    Serial.println (settings.mPropagationSegment) ;
+    Serial.print ("Phase segment 1: ") ;
+    Serial.println (settings.mPhaseSegment1) ;
+    Serial.print ("Phase segment 2: ") ;
+    Serial.println (settings.mPhaseSegment2) ;
+    Serial.print ("SJW: ") ;
+    Serial.println (settings.mSJW) ;
+    Serial.print ("Triple Sampling: ") ;
+    Serial.println (settings.mTripleSampling ? "yes" : "no") ;
+    Serial.print ("Actual bit rate: ") ;
+    Serial.print (settings.actualBitRate ()) ;
+    Serial.println (" bit/s") ;
+    Serial.print ("Exact bit rate ? ") ;
+    Serial.println (settings.exactBitRate () ? "yes" : "no") ;
+    Serial.print ("Sample point: ") ;
+    Serial.print (settings.samplePointFromBitStart ()) ;
+    Serial.println ("%") ;
+  } else {
+    Serial.print ("Configuration error 0x") ;
+    Serial.println (errorCode, HEX) ;
+  }
 }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+static uint32_t gBlinkLedDate = 0 ;
+static uint32_t gReceivedFrameCount = 0 ;
+static uint32_t gSentFrameCount = 0 ;
+
+//——————————————————————————————————————————————————————————————————————————————
+
+void loop () {
+  CANMessage frame ;
+  if (gBlinkLedDate < millis ()) {
+    gBlinkLedDate += 2000 ;
+    digitalWrite (LED_BUILTIN, !digitalRead (LED_BUILTIN)) ;
+    const bool ok = can.tryToSend (frame) ;
+    if (ok) {
+      gSentFrameCount += 1 ;
+      Serial.print ("Sent: ") ;
+      Serial.println (gSentFrameCount) ;
+    } else {
+      Serial.println ("Send failure") ;
+    }
+  }
+  if (can.available ()) {
+    can.receive (frame) ;
+    gReceivedFrameCount ++ ;
+    Serial.print ("Received: ") ;
+    Serial.println (gReceivedFrameCount) ;
+  }
+}
+
+//——————————————————————————————————————————————————————————————————————————————
