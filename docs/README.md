@@ -8,5 +8,6 @@ Preparation for Korean Formula SAE Student(KSAE) 2024
 - DRS Control included
 - IC Fuel-cut with DynoJet Powercommander V
 
+Licensed with The MIT License
 
 Any feedback from Anyone would be appreciated :)
