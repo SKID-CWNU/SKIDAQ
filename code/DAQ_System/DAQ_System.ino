@@ -6,7 +6,7 @@
 
 #include "DHT.h"
 #include <SoftwareSerial.h>
-#include <ACAN2515.h>
+#include "DFRobot_MCP2515.h"
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    DHT Library Configuration
@@ -18,13 +18,44 @@ DHT dht(DHTPIN, DHTTYPE);
 // ——————————————————————————————————————————————————————————————————————————————
 //    CAN Interface Configuration
 // ——————————————————————————————————————————————————————————————————————————————
-static const byte MCP2515_SCK = 18;  // SCK input of MCP2515
-static const byte MCP2515_MOSI = 19; // SDI input of MCP2515
-static const byte MCP2515_MISO = 16; // SDO output of MCP2515
-static const byte MCP2515_CS = 17;   // CS input of MCP2515
-static const byte MCP2515_INT = 20;  // INT output of MCP2515
-ACAN2515 can(MCP2515_CS, SPI, MCP2515_INT);
-static const uint32_t QUARTZ_FREQUENCY = 20UL * 1000UL * 1000UL; // 20 MHz
+const int SPI_CS_PIN = 17;
+DFRobot_MCP2515 CAN(SPI_CS_PIN); // Set CS pin
+unsigned char flagRecv = 0;
+unsigned char len = 0;
+unsigned char buf[8];
+char str[20];
+// ——————————————————————————————————————————————————————————————————————————————
+//   OBD-II PIDs Configuration - https://en.wikipedia.org/wiki/OBD-II_PIDs
+// ——————————————————————————————————————————————————————————————————————————————
+#define PID_ENGIN_PRM 0x0C
+#define PID_VEHICLE_SPEED 0x0D
+#define PID_COOLANT_TEMP 0x05
+
+#define CAN_ID_PID 0x7DF
+
+unsigned char PID_INPUT;
+unsigned char getPid = 0;
+
+void set_mask_filt()
+{
+    /*
+        set mask, set both the mask to 0x3ff
+    */
+
+    CAN.initMask(0, 0, 0x7FC);
+    CAN.initMask(1, 0, 0x7FC);
+
+    /*
+        set filter, we can receive id from 0x04 ~ 0x09
+    */
+    CAN.initFilter(MCP2515_RXF0, 0, 0x7E8);
+    CAN.initFilter(MCP2515_RXF1, 0, 0x7E8);
+
+    CAN.initFilter(MCP2515_RXF2, 0, 0x7E8);
+    CAN.initFilter(MCP2515_RXF3, 0, 0x7E8);
+    CAN.initFilter(MCP2515_RXF4, 0, 0x7E8);
+    CAN.initFilter(MCP2515_RXF5, 0, 0x7E8);
+}
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main Program Setup
@@ -42,56 +73,31 @@ void setup()
         delay(50);
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     }
-    //--- SPI Pin Assignment
-    SPI.setSCK(MCP2515_SCK);
-    SPI.setTX(MCP2515_MOSI);
-    SPI.setRX(MCP2515_MISO);
-    SPI.setCS(MCP2515_CS);
-    SPI.begin();                                                 //--- Begin SPI
-    dht.begin();                                                 //--- Begin DHT
-    ACAN2515Settings settings(QUARTZ_FREQUENCY, 125UL * 1000UL); // CAN bit rate 125 kb/s
-    settings.mRequestedMode = ACAN2515Settings::NormalMode;      // Select Normal mode
-    const uint16_t errorCode = can.begin(settings, []
-                                         { can.isr(); });
-    if (errorCode == 0)
-    {
-        Serial.print("Bit Rate prescaler: ");
-        Serial.println(settings.mBitRatePrescaler);
-        Serial.print("Propagation Segment: ");
-        Serial.println(settings.mPropagationSegment);
-        Serial.print("Phase segment 1: ");
-        Serial.println(settings.mPhaseSegment1);
-        Serial.print("Phase segment 2: ");
-        Serial.println(settings.mPhaseSegment2);
-        Serial.print("SJW: ");
-        Serial.println(settings.mSJW);
-        Serial.print("Triple Sampling: ");
-        Serial.println(settings.mTripleSampling ? "yes" : "no");
-        Serial.print("Actual bit rate: ");
-        Serial.print(settings.actualBitRate());
-        Serial.println(" bit/s");
-        Serial.print("Exact bit rate ? ");
-        Serial.println(settings.exactBitRate() ? "yes" : "no");
-        Serial.print("Sample point: ");
-        Serial.print(settings.samplePointFromBitStart());
-        Serial.println("%");
+    while (CAN.begin(CAN_500KBPS))
+    { // init can bus : baudrate = 500k
+        Serial.println("DFROBOT's CAN BUS Shield init fail");
+        Serial.println("Please Init CAN BUS Shield again");
+        delay(3000);
     }
-    else
-    {
-        Serial.print("Configuration error 0x");
-        Serial.println(errorCode, HEX);
-    }
+    Serial.println("DFROBOT's CAN BUS Shield init ok!\n");
+
+    attachInterrupt(11, MCP2515_ISR, FALLING); // start interrupt
+    
     Serial.println("DAQ System Init Success!");
+    set_mask_filt();
     delay(5000);
 }
+int h = 0;
+int t = 0;
+
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main(Loop) Area
 // ——————————————————————————————————————————————————————————————————————————————
 void loop()
 {
     // DHT Area
-    int h = dht.readHumidity();    // Gets Humidity value
-    int t = dht.readTemperature(); // Gets Temperature value
+    h = dht.readHumidity();    // Gets Humidity value
+    t = dht.readTemperature(); // Gets Temperature value
 
     // Check if any reads failed and exit early (to try again).
     if (isnan(h) || isnan(t))
@@ -107,38 +113,13 @@ void loop()
     // ——————————————————————————————————————————————————————————————————————————————
 
     // CAN Area
-    CANMessage frame;
-    if (gBlinkLedDate < millis())
-    {
-        gBlinkLedDate += 2000;
-        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-        const bool ok = can.tryToSend(frame);
-        if (ok)
-        {
-            gSentFrameCount += 1;
-            Serial.print("Sent: ");
-            Serial.println(gSentFrameCount);
-        }
-        else
-        {
-            Serial.println("Send failure");
-        }
-    }
-    if (can.available())
-    {
-        can.receive(frame);
-        gReceivedFrameCount++;
-        Serial.print("Received: ");
-        Serial.println(gReceivedFrameCount);
-    }
+
+    // set id to send data buff, id is arranged form 0x00 to 0x09.
+    CAN.sendMsgBuf(2, 0, sizeof(h), h);
+    delay(100);
 }
 
 // Extra Configurations
-static uint32_t gBlinkLedDate = 0 ;
-static uint32_t gReceivedFrameCount = 0 ;
-static uint32_t gSentFrameCount = 0 ;
-
-
 #ifndef ARDUINO_ARCH_RP2040
 #error "Select a Raspberry Pi Pico board"
 #endif
