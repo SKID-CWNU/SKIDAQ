@@ -33,6 +33,10 @@ char str[20];
 
 String BuildMessage = "";
 int MSGIdentifier = 0;
+// ——————————————————————————————————————————————————————————————————————————————
+//    Other Sensors Initalization
+// ——————————————————————————————————————————————————————————————————————————————
+int onBoardTemp = analogReadTemp();
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main Program Setup
@@ -40,7 +44,7 @@ int MSGIdentifier = 0;
 void setup()
 {
     Serial.begin(115200);
-
+    dht.begin(); // DHT Sensor Begin
 START_INIT:
 
     if (CAN_OK == CAN.begin(CAN_500KBPS)) // init can bus : baudrate = 500k
@@ -52,7 +56,7 @@ START_INIT:
         Serial.println("CAN BUS Shield init fail");
         Serial.println("Init CAN BUS Shield again");
         delay(100);
-        goto START_INIT;
+        goto START_INIT; //wait 100ms and try Initializing again
     }
 }
 // ——————————————————————————————————————————————————————————————————————————————
@@ -67,25 +71,24 @@ void loop()
     // Check if any reads failed and exit early (to try again).
     if (isnan(h) || isnan(t))
     {
-        Serial.println("Failed to read from DHT sensor!");
+        Serial.println("DHT Error: Failed to read from DHT sensor!");
         return;
     }
     // Printing Values for Monitoring
-    Serial.print("Humidity: ");
-    Serial.print(h);
-    Serial.print("%  Temperature: ");
-    Serial.print(t);
+    // Serial.print("Humidity: ");
+    // Serial.print(h);
+    // Serial.print("%  Temperature: ");
+    // Serial.print(t);
     // ——————————————————————————————————————————————————————————————————————————————
 
     // CAN Area
-
     char rndCoolantTemp = random(1, 200);
     char rndRPM = random(1, 55);
     char rndSpeed = random(0, 255);
     char rndIAT = random(0, 255);
     char rndMAF = random(0, 255);
-    char rndAmbientAirTemp = h;
-    char rndCAT1Temp = random(1, 55);
+    char AmbientAirTemp = h;
+    char CAT1Temp = onBoardTemp;
 
     // GENERAL ROUTINE
     unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -97,11 +100,11 @@ void loop()
     unsigned char vspeed[7] = {4, 65, 13, rndSpeed, 224, 185, 147};
     unsigned char IATSensor[7] = {4, 65, 15, rndIAT, 0, 185, 147};
     unsigned char MAFSensor[7] = {4, 65, 16, rndMAF, 0, 185, 147};
-    unsigned char AmbientAirTemp[7] = {4, 65, 70, rndAmbientAirTemp, 0, 185, 147};
-    unsigned char CAT1Temp[7] = {4, 65, 60, rndCAT1Temp, 224, 185, 147};
-    unsigned char CAT2Temp[7] = {4, 65, 61, rndCAT1Temp, 224, 185, 147};
-    unsigned char CAT3Temp[7] = {4, 65, 62, rndCAT1Temp, 224, 185, 147};
-    unsigned char CAT4Temp[7] = {4, 65, 63, rndCAT1Temp, 224, 185, 147};
+    unsigned char AmbientAirTemp[7] = {4, 65, 70, AmbientAirTemp, 0, 185, 147};
+    unsigned char CAT1Temp[7] = {4, 65, 60, CAT1Temp, 224, 185, 147};
+    unsigned char CAT2Temp[7] = {4, 65, 61, CAT1Temp, 224, 185, 147};
+    unsigned char CAT3Temp[7] = {4, 65, 62, CAT1Temp, 224, 185, 147};
+    unsigned char CAT4Temp[7] = {4, 65, 63, CAT1Temp, 224, 185, 147};
 
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
@@ -171,6 +174,7 @@ void loop()
         }
         BuildMessage = "";
     }
+    delay(100);
 }
 
 // ——————————————————————————————————————————————————————————————————————————————
