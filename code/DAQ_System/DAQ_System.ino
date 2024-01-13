@@ -36,7 +36,7 @@ int MSGIdentifier = 0;
 // ——————————————————————————————————————————————————————————————————————————————
 //    Other Sensors Initalization
 // ——————————————————————————————————————————————————————————————————————————————
-int onBoardTemp = analogReadTemp();
+int picoTemp = analogReadTemp();
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main Program Setup
@@ -87,8 +87,8 @@ void loop()
     char rndSpeed = random(0, 255);
     char rndIAT = random(0, 255);
     char rndMAF = random(0, 255);
-    char AmbientAirTemp = h;
-    char CAT1Temp = onBoardTemp;
+    char ControlAirTemp = h;
+    char OBTemp = picoTemp;
 
     // GENERAL ROUTINE
     unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -100,11 +100,11 @@ void loop()
     unsigned char vspeed[7] = {4, 65, 13, rndSpeed, 224, 185, 147};
     unsigned char IATSensor[7] = {4, 65, 15, rndIAT, 0, 185, 147};
     unsigned char MAFSensor[7] = {4, 65, 16, rndMAF, 0, 185, 147};
-    unsigned char AmbientAirTemp[7] = {4, 65, 70, AmbientAirTemp, 0, 185, 147};
-    unsigned char CAT1Temp[7] = {4, 65, 60, CAT1Temp, 224, 185, 147};
-    unsigned char CAT2Temp[7] = {4, 65, 61, CAT1Temp, 224, 185, 147};
-    unsigned char CAT3Temp[7] = {4, 65, 62, CAT1Temp, 224, 185, 147};
-    unsigned char CAT4Temp[7] = {4, 65, 63, CAT1Temp, 224, 185, 147};
+    unsigned char AmbientAirTemp[7] = {4, 65, 70, ControlAirTemp, 0, 185, 147};
+    unsigned char CAT1Temp[7] = {4, 65, 60, OBTemp, 224, 185, 147};
+    unsigned char CAT2Temp[7] = {4, 65, 61, OBTemp, 224, 185, 147};
+    unsigned char CAT3Temp[7] = {4, 65, 62, OBTemp, 224, 185, 147};
+    unsigned char CAT4Temp[7] = {4, 65, 63, OBTemp, 224, 185, 147};
 
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
