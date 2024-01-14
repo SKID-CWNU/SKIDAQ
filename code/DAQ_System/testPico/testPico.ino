@@ -1,132 +1,133 @@
-#include "mcp_can.h"
-#include "mcp2515_can.h"
-#include <SPI.h>
-#include <Arduino.h>
+/*!
+ * @file  receiveInterrupt.ino
+ * @brief  CAN-BUS Shield, receive data with interrupt mode when in interrupt mode,
+ * @n  the data coming can't be too fast, must >20ms, or else you can use check mode
+ * @copyright  Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @license  The MIT License (MIT)
+ * @author  Arduinolibrary
+ * @maintainer  [qsjhyy](yihuan.huang@dfrobot.com)
+ * @version  V1.0
+ * @date  2022-05-25
+ * @url  https://github.com/DFRobot/DFRobot_MCP2515
+ */
+#include "DFRobot_MCP2515.h"
 
+const int SPI_CS_PIN = 17;
+DFRobot_MCP2515 CAN(SPI_CS_PIN); // Set CS pin
 
-mcp2515_can CAN(17); // Set CS to pin 17
-const int CAN_INT_PIN = 11;
-
-INT32U canId = 0x000;
-
+unsigned char flagRecv = 0;
 unsigned char len = 0;
 unsigned char buf[8];
 char str[20];
-
 String BuildMessage = "";
-int MSGIdentifier = 0;
 
 void setup()
 {
     Serial.begin(115200);
 
-START_INIT:
+    while (CAN.begin(CAN_500KBPS))
+    { // init can bus : baudrate = 500k
+        Serial.println("DFROBOT's CAN BUS Shield init fail");
+        Serial.println("Please Init CAN BUS Shield again");
+        delay(3000);
+    }
+    Serial.println("DFROBOT's CAN BUS Shield init ok!\n");
 
-    if (CAN_OK == CAN.begin(CAN_500KBPS)) // init can bus : baudrate = 500k
-    {
-        Serial.println("CAN BUS Shield init ok!");
-    }
-    else
-    {
-        Serial.println("CAN BUS Shield init fail");
-        Serial.println("Init CAN BUS Shield again");
-        delay(100);
-        goto START_INIT;
-    }
+    attachInterrupt(20, MCP2515_ISR, FALLING); // start interrupt
 }
 
+void MCP2515_ISR()
+{
+    flagRecv = 1;
+}
+#define INT32U unsigned long int
+INT32U canId = 0x000;
+unsigned char pidchk[8] = {2, 1, 0, 0, 0, 0, 0, 0};
+unsigned char milClr[8] = {2, 1, 1, 0, 0, 0, 0, 0};
+unsigned char coolTemp[8] = {2, 1, 5, 0, 0, 0, 0, 0};
+unsigned char rpmm[8] = {2, 1, 12, 0, 0, 0, 0, 0};
+unsigned char ambtemp[8] = {2, 1, 70, 0, 0, 0, 0, 0};
 void loop()
 {
-    char rndCoolantTemp = random(1, 200);
-    char rndRPM = random(1, 55);
-    char rndSpeed = random(0, 255);
-    char rndIAT = random(0, 255);
-    char rndMAF = random(0, 255);
-    char rndAmbientAirTemp = random(0, 200);
-    char rndCAT1Temp = random(1, 55);
 
-    // GENERAL ROUTINE
-    unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-    unsigned char MilCleared[7] = {4, 65, 63, 34, 224, 185, 147};
-
-    // SENSORS
-    unsigned char CoolantTemp[7] = {4, 65, 5, rndCoolantTemp, 0, 185, 147};
-    unsigned char rpm[7] = {4, 65, 12, rndRPM, 224, 185, 147};
-    unsigned char vspeed[7] = {4, 65, 13, rndSpeed, 224, 185, 147};
-    unsigned char IATSensor[7] = {4, 65, 15, rndIAT, 0, 185, 147};
-    unsigned char MAFSensor[7] = {4, 65, 16, rndMAF, 0, 185, 147};
-    unsigned char AmbientAirTemp[7] = {4, 65, 70, rndAmbientAirTemp, 0, 185, 147};
-    unsigned char CAT1Temp[7] = {4, 65, 60, rndCAT1Temp, 224, 185, 147};
-    unsigned char CAT2Temp[7] = {4, 65, 61, rndCAT1Temp, 224, 185, 147};
-    unsigned char CAT3Temp[7] = {4, 65, 62, rndCAT1Temp, 224, 185, 147};
-    unsigned char CAT4Temp[7] = {4, 65, 63, rndCAT1Temp, 224, 185, 147};
-
-    if (CAN_MSGAVAIL == CAN.checkReceive())
+    char Order = Serial.read();
+    if (Order == '1')
     {
+        CAN.sendMsgBuf(0x02, 0, 8, pidchk);
+        Order = 0;
+    }
+    else if (Order == '2')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, milClr);
+        Order = 0;
+    }
+    else if (Order == '3')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, coolTemp);
+        Order = 0;
+    }
+    else if (Order == '4')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, rpmm);
+        Order = 0;
+    }
+    else if (Order == '5')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, ambtemp);
+        Order = 0;
+    }
+    else if (Order == 0)
+    {
+    }
+    if (flagRecv)
+    { // check if get data
 
-        CAN.readMsgBuf(&len, buf);
-        canId = CAN.getCanId();
-        Serial.print("<");
-        Serial.print(canId);
-        Serial.print(",");
+        flagRecv = 0; // clear flag
 
-        for (int i = 0; i < len; i++)
+        // iterate over all pending messages
+        // If either the bus is saturated or the MCU is busy,
+        // both RX buffers may be in use and after having read a single
+        // message, MCU does  clear the corresponding IRQ conditon.
+        while (CAN_MSGAVAIL == CAN.checkReceive())
         {
-            BuildMessage = BuildMessage + buf[i] + ",";
-        }
-        Serial.println(BuildMessage);
+            // read data,  len: data length, buf: data buf
+            CAN.readMsgBuf(&len, buf);
+            canId = CAN.getCanId();
+            if (canId == 0x7E8)
+            {
+                if (buf[0] == 4 && buf[1] == 65)
+                {
+                    switch (buf[2])
+                    {
+                    case 70:
+                        Serial.print("Ambient Temperature: ");
+                        Serial.println(buf[3]);
+                        break;
+                    case 63:
+                        Serial.println("Status Cleared.");
+                        break;
+                    case 5:
+                        Serial.print("Coolant Temperature: ");
+                        Serial.println(buf[3], OCT);
+                        break;
+                    case 12:
+                        Serial.print("TachoMeter: ");
+                        Serial.println(buf[3], OCT);
+                        break;
 
-        // Check wich message was received.
-        if (BuildMessage == "2,1,0,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 8, SupportedPID);
+                    default:
+                        break;
+                    }
+                }
+            } else if (canId)
+            // print the data
+            for (int i = 0; i < len; i++)
+            {
+                BuildMessage = BuildMessage + buf[i] + ",";
+            }
+            Serial.println(BuildMessage);
+            BuildMessage = "";
+            Serial.println(" ");
         }
-        if (BuildMessage == "2,1,1,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, MilCleared);
-        }
-
-        // SEND SENSOR STATUSES
-        if (BuildMessage == "2,1,5,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CoolantTemp);
-        }
-        if (BuildMessage == "2,1,12,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, rpm);
-        }
-        if (BuildMessage == "2,1,13,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, vspeed);
-        }
-        if (BuildMessage == "2,1,15,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, IATSensor);
-        }
-        if (BuildMessage == "2,1,16,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, MAFSensor);
-        }
-        if (BuildMessage == "2,1,70,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, AmbientAirTemp);
-        }
-        if (BuildMessage == "2,1,60,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CAT1Temp);
-        }
-        if (BuildMessage == "2,1,61,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CAT2Temp);
-        }
-        if (BuildMessage == "2,1,62,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CAT3Temp);
-        }
-        if (BuildMessage == "2,1,63,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CAT4Temp);
-        }
-        BuildMessage = "";
     }
 }

@@ -1,8 +1,8 @@
 {
-    "sketch": "code\\DAQ_System\\DAQ_System.ino",
+    "sketch": "code\\DAQ_System\\testPico\\testPico.ino",
     "board": "rp2040:rp2040:rpipico",
     "port": "COM18",
     "output": "../build",
     "intelliSenseGen": "global",
-    "configuration": "flash=2097152_0,freq=133,opt=Optimize2,rtti=Disabled,stackprotect=Disabled,exceptions=Enabled,dbgport=Disabled,dbglvl=All,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
+    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=All,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
 }

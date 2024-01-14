@@ -6,10 +6,8 @@
 
 #include "DHT.h"
 #include <SoftwareSerial.h>
-#include "mcp_can.h"
-#include "mcp2515_can.h"
+#include "DFRobot_MCP2515.h"
 #include <SPI.h>
-#include <Arduino.h>
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    DHT Library Configuration
@@ -21,9 +19,10 @@ DHT dht(DHTPIN, DHTTYPE);
 // ——————————————————————————————————————————————————————————————————————————————
 //    CAN Interface Configuration
 // ——————————————————————————————————————————————————————————————————————————————
+
 #define INT32U unsigned long int
-mcp2515_can CAN(17); // Set CS to pin 17
-const int CAN_INT_PIN = 11;
+DFRobot_MCP2515 CAN(17); // Set CS to pin 17
+const int CAN_INT_PIN = 20;
 
 INT32U canId = 0x000;
 
@@ -45,18 +44,10 @@ void setup()
 {
     Serial.begin(115200);
     dht.begin(); // DHT Sensor Begin
-START_INIT:
-
-    if (CAN_OK == CAN.begin(CAN_500KBPS)) // init can bus : baudrate = 500k
-    {
-        Serial.println("CAN BUS Shield init ok!");
-    }
-    else
-    {
+    while( CAN.begin(CAN_500KBPS) ){   // init can bus : baudrate = 500k
         Serial.println("CAN BUS Shield init fail");
-        Serial.println("Init CAN BUS Shield again");
-        delay(100);
-        goto START_INIT; //wait 100ms and try Initializing again
+        Serial.println("Please Init CAN BUS Shield again");
+        delay(3000);
     }
 }
 // ——————————————————————————————————————————————————————————————————————————————
@@ -87,10 +78,10 @@ void loop()
     char rndSpeed = random(0, 255);
     char rndIAT = random(0, 255);
     char rndMAF = random(0, 255);
-    char ControlAirTemp = h;
+    char ControlAirTemp = t;
     char OBTemp = picoTemp;
 
-    // GENERAL ROUTINE
+    // GENERAL Sensor ROUTINE
     unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     unsigned char MilCleared[7] = {4, 65, 63, 34, 224, 185, 147};
 
@@ -105,6 +96,10 @@ void loop()
     unsigned char CAT2Temp[7] = {4, 65, 61, OBTemp, 224, 185, 147};
     unsigned char CAT3Temp[7] = {4, 65, 62, OBTemp, 224, 185, 147};
     unsigned char CAT4Temp[7] = {4, 65, 63, OBTemp, 224, 185, 147};
+
+    
+
+
 
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
@@ -155,6 +150,7 @@ void loop()
         if (BuildMessage == "2,1,70,0,0,0,0,0,")
         {
             CAN.sendMsgBuf(0x7E8, 0, 7, AmbientAirTemp);
+            Serial.println(t);
         }
         if (BuildMessage == "2,1,60,0,0,0,0,0,")
         {
