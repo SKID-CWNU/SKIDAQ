@@ -8,6 +8,9 @@
 #include <SoftwareSerial.h>
 #include "DFRobot_MCP2515.h"
 #include <SPI.h>
+#include <ADCInput.h>
+
+
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    DHT Library Configuration
@@ -36,7 +39,9 @@ int MSGIdentifier = 0;
 //    Other Sensors Initalization
 // ——————————————————————————————————————————————————————————————————————————————
 int picoTemp = analogReadTemp();
-
+ADCInput RPulse(A0);
+// For stereo/dual mikes, could use this line instead
+//   ADCInput(A0, A1);
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main Program Setup
 // ——————————————————————————————————————————————————————————————————————————————
@@ -44,7 +49,9 @@ void setup()
 {
     Serial.begin(115200);
     dht.begin(); // DHT Sensor Begin
-    while( CAN.begin(CAN_500KBPS) ){   // init can bus : baudrate = 500k
+    RPulse.begin(8000); // CPS Pulse A/D Converter Begin
+    while (CAN.begin(CAN_500KBPS))
+    { // init can bus : baudrate = 500k
         Serial.println("CAN BUS Shield init fail");
         Serial.println("Please Init CAN BUS Shield again");
         delay(3000);
@@ -56,6 +63,7 @@ void setup()
 void loop()
 {
     // DHT Area
+    // ——————————————————————————————————————————————————————————————————————————————
     int h = dht.readHumidity();    // Gets Humidity value
     int t = dht.readTemperature(); // Gets Temperature value
 
@@ -73,6 +81,8 @@ void loop()
     // ——————————————————————————————————————————————————————————————————————————————
 
     // CAN Area
+
+    // Sensor Value conversion
     char rndCoolantTemp = random(1, 200);
     char rndRPM = random(1, 55);
     char rndSpeed = random(0, 255);
@@ -85,7 +95,7 @@ void loop()
     unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     unsigned char MilCleared[7] = {4, 65, 63, 34, 224, 185, 147};
 
-    // SENSORS
+    // SENSOR CAN Message Setup
     unsigned char CoolantTemp[7] = {4, 65, 5, rndCoolantTemp, 0, 185, 147};
     unsigned char rpm[7] = {4, 65, 12, rndRPM, 224, 185, 147};
     unsigned char vspeed[7] = {4, 65, 13, rndSpeed, 224, 185, 147};
@@ -96,10 +106,6 @@ void loop()
     unsigned char CAT2Temp[7] = {4, 65, 61, OBTemp, 224, 185, 147};
     unsigned char CAT3Temp[7] = {4, 65, 62, OBTemp, 224, 185, 147};
     unsigned char CAT4Temp[7] = {4, 65, 63, OBTemp, 224, 185, 147};
-
-    
-
-
 
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
