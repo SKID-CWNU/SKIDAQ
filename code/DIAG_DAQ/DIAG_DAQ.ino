@@ -1,15 +1,21 @@
+// ——————————————————————————————————————————————————————————————————————————————//
+//                  Raspberry Pi Pico based SKID-FS DAQ System                   //
+//                Solenoid Valve Controlled QuickShift Interface                 //
+//                             Author: Lim Chae Won                              //
+//                             The MIT License (MIT)                             //
+// ——————————————————————————————————————————————————————————————————————————————//
 /*!
- * @file  receiveInterrupt.ino
- * @brief  CAN-BUS Shield, receive data with interrupt mode when in interrupt mode,
+ * @file  DIAG_DAQ.ino
+ * @brief  Raspberry Pi Pico based SKID-FS DAQ System Diganosing Device
  * @n  the data coming can't be too fast, must >20ms, or else you can use check mode
- * @copyright  Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @copyright  Copyright (c) Lim Chae Won 2024
  * @license  The MIT License (MIT)
- * @author  Arduinolibrary
- * @maintainer  [qsjhyy](yihuan.huang@dfrobot.com)
+ * @author  SKID-CWNU (Lim Chae Won)
+ * @maintainer Lim Chae Won
  * @version  V1.0
- * @date  2022-05-25
- * @url  https://github.com/DFRobot/DFRobot_MCP2515
- */
+ * @date  2024-01-20
+ * @url 
+ * */
 #include "DFRobot_MCP2515.h"
 
 const int SPI_CS_PIN = 17;
@@ -47,35 +53,66 @@ unsigned char milClr[8] = {2, 1, 1, 0, 0, 0, 0, 0};
 unsigned char coolTemp[8] = {2, 1, 5, 0, 0, 0, 0, 0};
 unsigned char rpmm[8] = {2, 1, 12, 0, 0, 0, 0, 0};
 unsigned char ambtemp[8] = {2, 1, 70, 0, 0, 0, 0, 0};
+unsigned char obhumidity[8] = {2, 1, 71, 0, 0, 0, 0, 0};
+unsigned char Axdir[8] = {2, 1, 77, 0, 0, 0, 0, 0};
+unsigned char Aydir[8] = {2, 1, 78, 0, 0, 0, 0, 0};
+unsigned char Azdir[8] = {2, 1, 79, 0, 0, 0, 0, 0};
+unsigned char AAll[8] = {2, 1, 80, 0, 0, 0, 0, 0};
 void loop()
 {
 
     char Order = Serial.read();
-    if (Order == '1')
+    if (Order == 'chk')
     {
         CAN.sendMsgBuf(0x02, 0, 8, pidchk);
         Order = 0;
     }
-    else if (Order == '2')
+    else if (Order == 'clr')
     {
         CAN.sendMsgBuf(0x02, 0, 8, milClr);
         Order = 0;
     }
-    else if (Order == '3')
+    else if (Order == 'ct')
     {
         CAN.sendMsgBuf(0x02, 0, 8, coolTemp);
         Order = 0;
     }
-    else if (Order == '4')
+    else if (Order == 'r')
     {
         CAN.sendMsgBuf(0x02, 0, 8, rpmm);
         Order = 0;
     }
-    else if (Order == '5')
+    else if (Order == 't')
     {
         CAN.sendMsgBuf(0x02, 0, 8, ambtemp);
         Order = 0;
     }
+    else if (Order == 'h')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, obhumidity);
+        Order = 0;
+    }
+    else if (Order == 'x')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, Axdir);
+        Order = 0;
+    }
+    else if (Order == 'y')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, Aydir);
+        Order = 0;
+    }
+    else if (Order == 'z')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, Azdir);
+        Order = 0;
+    }
+    else if (Order == 'allaxis')
+    {
+        CAN.sendMsgBuf(0x02, 0, 8, AAll);
+        Order = 0;
+    }
+
     else if (Order == 0)
     {
     }
@@ -99,10 +136,6 @@ void loop()
                 {
                     switch (buf[2])
                     {
-                    case 70:
-                        Serial.print("Ambient Temperature: ");
-                        Serial.println(buf[3]);
-                        break;
                     case 63:
                         Serial.println("Status Cleared.");
                         break;
@@ -114,17 +147,48 @@ void loop()
                         Serial.print("TachoMeter: ");
                         Serial.println(buf[3], OCT);
                         break;
+                    case 12:
+                        Serial.print("TachoMeter: ");
+                        Serial.println(buf[3], OCT);
+                        break;
+                    case 70:
+                        Serial.print("Ambient Temperature: ");
+                        Serial.println(buf[3]);
+                        break;
+                    case 71:
+                        Serial.print("Humidity: ");
+                        Serial.println(buf[3], OCT);
+                        break;
+                    case 77:
+                        Serial.print("Accel X: ");
+                        Serial.println(buf[3], OCT);
+                        break;
+                    case 78:
+                        Serial.print("Accel Y: ");
+                        Serial.println(buf[3], OCT);
+                        break;
+                    case 79:
+                        Serial.print("Accel Z: ");
+                        Serial.println(buf[3], OCT);
+                        break;
+                    case 80:
+                        Serial.print("Accel All Axis: ");
+                        Serial.println(buf[3], OCT);
+                        Serial.println(buf[4], OCT);
+                        Serial.println(buf[5], OCT);
+                        break;
 
                     default:
                         break;
                     }
                 }
-            } else if (canId)
-            // print the data
-            for (int i = 0; i < len; i++)
-            {
-                BuildMessage = BuildMessage + buf[i] + ",";
             }
+            else if (canId)
+                // print the data
+                for (int i = 0; i < len; i++)
+                {
+                    BuildMessage = BuildMessage + buf[i] + ",";
+                }
             Serial.println(BuildMessage);
             BuildMessage = "";
             Serial.println(" ");

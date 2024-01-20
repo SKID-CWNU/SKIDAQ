@@ -2,6 +2,7 @@
 //                  Raspberry Pi Pico based SKID-FS DAQ System                   //
 //                Solenoid Valve Controlled QuickShift Interface                 //
 //                             Author: Lim Chae Won                              //
+//                             The MIT License (MIT)                             //
 // ——————————————————————————————————————————————————————————————————————————————//
 
 #include <ADCInput.h>
@@ -245,7 +246,7 @@ void loop()
     // CAN Area
 
     // Sensor Value conversion
-    char rndCoolantTemp = random(1, 200);
+    char rndCoolantTemp = random(1, 200); // Set to random until measuring Actual value
     char rndRPM = random(1, 55);
     char rndSpeed = random(0, 255);
     char rndIAT = random(0, 255);
@@ -255,6 +256,7 @@ void loop()
     char acelz = event.acceleration.z;
     char ControlAirTemp = t;
     char OBTemp = picoTemp;
+    char ControlHumidity = h;
 
     // GENERAL Sensor ROUTINE
     unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -266,14 +268,12 @@ void loop()
     unsigned char vspeed[7] = {4, 65, 13, rndSpeed, 224, 185, 147};
     unsigned char IATSensor[7] = {4, 65, 15, rndIAT, 0, 185, 147};
     unsigned char MAFSensor[7] = {4, 65, 16, rndMAF, 0, 185, 147};
-    unsigned char AmbientAirTemp[7] = {4, 65, 70, ControlAirTemp, 0, 185, 147};
+    unsigned char BoardAirTemp[7] = {4, 65, 70, ControlAirTemp, 0, 185, 147};
+    unsigned char ControlHum[7] = {4, 65, 71, ControlHumidity, 0, 185, 147};
     unsigned char Acelxdir[7] = {4, 65, 77, acelx, 224, 185, 147};
     unsigned char Acelydir[7] = {4, 65, 78, acely, 224, 185, 147};
     unsigned char Acelzdir[7] = {4, 65, 79, acelz, 224, 185, 147};
-    unsigned char CAT1Temp[7] = {4, 65, 60, OBTemp, 224, 185, 147};
-    unsigned char CAT2Temp[7] = {4, 65, 61, OBTemp, 224, 185, 147};
-    unsigned char CAT3Temp[7] = {4, 65, 62, OBTemp, 224, 185, 147};
-    unsigned char CAT4Temp[7] = {4, 65, 63, OBTemp, 224, 185, 147};
+    unsigned char Acelall[7] = {4, 65, 80, acelx, acely, acelz, 147};
 
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
@@ -322,24 +322,12 @@ void loop()
         }
         if (BuildMessage == "2,1,70,0,0,0,0,0,")
         {
-            CAN.sendMsgBuf(0x7E8, 0, 7, AmbientAirTemp);
+            CAN.sendMsgBuf(0x7E8, 0, 7, BoardAirTemp);
             Serial.println(t);
         }
-        if (BuildMessage == "2,1,60,0,0,0,0,0,")
+        if (BuildMessage == "2,1,71,0,0,0,0,0,")
         {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CAT1Temp);
-        }
-        if (BuildMessage == "2,1,61,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CAT2Temp);
-        }
-        if (BuildMessage == "2,1,62,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CAT3Temp);
-        }
-        if (BuildMessage == "2,1,63,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CAT4Temp);
+            CAN.sendMsgBuf(0x7E8, 0, 7, ControlHum);
         }
         if (BuildMessage == "2,1,77,0,0,0,0,0,")
         {
@@ -353,10 +341,13 @@ void loop()
         {
             CAN.sendMsgBuf(0x7E8, 0, 7, Acelzdir);
         }
+        if (BuildMessage == "2,1,80,0,0,0,0,0,")
+        {
+            CAN.sendMsgBuf(0x7E8, 0, 7, Acelzdir);
+        }
+        BuildMessage = "";
     }
-    BuildMessage = "";
-}
-delay(100);
+    delay(100);
 }
 
 // ——————————————————————————————————————————————————————————————————————————————
