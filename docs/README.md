@@ -1,4 +1,4 @@
-# SKID Steering Wheel + DAQ subsystem
+# SKIDAQ: DAQ Subsystem for SKID
 Formula Digital Steering Wheel + Data Acquisition Sub-system Project
 
 Preparation for Korean Formula SAE Student(KSAE) 2024
@@ -8,6 +8,4 @@ Preparation for Korean Formula SAE Student(KSAE) 2024
 - DRS Control included
 - IC Fuel-cut with DynoJet Powercommander V
 
-Licensed with The MIT License
-
-Any feedback from Anyone would be appreciated :)
+SKIDAQ © 2024 by Lim ChaeWon is licensed under CC BY-SA 4.0
