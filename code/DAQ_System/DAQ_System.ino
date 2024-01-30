@@ -5,6 +5,25 @@
 //                             Author: Lim Chae Won                              //
 //                             The MIT License (MIT)                             //
 // ——————————————————————————————————————————————————————————————————————————————//
+//
+//    Pin Summary
+//
+//    GP4  - ADXL345 SDA Pin
+//    GP5  - ADXL345 SCL Pin
+//    GP6  - DIAG Mode Interrupt
+//    GP10 - DHT Temp/Humid Sensor
+//    GP12 - MOSFET Upshift
+//    GP13 - MOSFET Downshift
+//    GP16 - CAN RX Pin - to SO (MISO)
+//    GP17 - CAN CS Pin
+//    GP18 - CAN SCK Pin
+//    GP19 - CAN TX Pin - to SI (MOSI)
+//    GP20 - CAN Interrupt Pin
+//    ADC0 - CKP(RPM) Pulse Monitor
+//
+//    Ref: https://www.raspberrypi.com/documentation/microcontrollers/images/pico-pinout.svg
+//
+// ——————————————————————————————————————————————————————————————————————————————//
 
 #include <ADCInput.h>
 #include <Adafruit_Sensor.h>
@@ -150,13 +169,16 @@ void displayRange(void)
     }
     Serial.println(" g");
 }
+
 // ——————————————————————————————————————————————————————————————————————————————
-//    Other Sensors Initalization
+//    Other Comp. Initalization
 // ——————————————————————————————————————————————————————————————————————————————
 int picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
 int obled = LED_BUILTIN;         // On-Board LED for Basic Error Indication
 ADCInput RPulse(A0);             // For stereo/dual mikes, could use this line instead
 // ADCInput(A0, A1);
+#define DiagEN = 6 // Toggle Switch for OBD2 Simulation
+int DIAGENB = 0;   //
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    MOSFET Switch Module Configuration
@@ -173,21 +195,10 @@ void setup()
     pinMode(obled, OUTPUT);
     pinMode(MOSUP_PIN, OUTPUT);
     pinMode(MOSDOWN_PIN, OUTPUT);
+    pinMode(DiagEN, INPUT);
     Serial.begin(115200);
     dht.begin();        // DHT Sensor Begin
     RPulse.begin(8000); // CPS Pulse A/D Converter Begin
-    if (!accel.begin())
-    {
-        /* There was a problem detecting the ADXL345 ... check your connections */
-        Serial.println("Ooops, no ADXL345 detected ... Check your wiring!");
-        while (1)
-            ;
-    }
-    accel.setRange(ADXL345_RANGE_16_G);
-    // accel.setRange(ADXL345_RANGE_8_G);
-    // accel.setRange(ADXL345_RANGE_4_G);
-    // accel.setRange(ADXL345_RANGE_2_G);
-    Serial.println("-----ADXL345 STATUS-----");
     /* Display some basic information on this sensor */
     displaySensorDetails();
     /* Display additional settings (outside the scope of sensor_t) */
@@ -202,6 +213,18 @@ void setup()
         delay(3000);
         digitalWrite(obled, LOW);
     }
+    if (!accel.begin())
+    {
+        /* There was a problem detecting the ADXL345 ... check your connections */
+        Serial.println("Ooops, no ADXL345 detected ... Check your wiring!");
+        while (1)
+            ;
+    }
+    accel.setRange(ADXL345_RANGE_16_G);
+    // accel.setRange(ADXL345_RANGE_8_G);
+    // accel.setRange(ADXL345_RANGE_4_G);
+    // accel.setRange(ADXL345_RANGE_2_G);
+    Serial.println("-----ADXL345 STATUS-----");
 }
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main(Loop) Area
@@ -259,94 +282,105 @@ void loop()
     char OBTemp = picoTemp;
     char ControlHumidity = h;
 
+    // Normal CAN Message Configuration
+    unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    CAN.sendMsgBuf(0x7E8, 0, 8, SupportedPID);
+
     // GENERAL Sensor ROUTINE
     unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     unsigned char MilCleared[7] = {4, 65, 63, 34, 224, 185, 147};
 
+    // OBD2 Mode Configuration
     // SENSOR CAN Message Setup
-    unsigned char CoolantTemp[7] = {4, 65, 5, rndCoolantTemp, 0, 185, 147};
-    unsigned char rpm[7] = {4, 65, 12, rndRPM, 224, 185, 147};
-    unsigned char vspeed[7] = {4, 65, 13, rndSpeed, 224, 185, 147};
-    unsigned char IATSensor[7] = {4, 65, 15, rndIAT, 0, 185, 147};
-    unsigned char MAFSensor[7] = {4, 65, 16, rndMAF, 0, 185, 147};
-    unsigned char BoardAirTemp[7] = {4, 65, 70, ControlAirTemp, 0, 185, 147};
-    unsigned char ControlHum[7] = {4, 65, 71, ControlHumidity, 0, 185, 147};
-    unsigned char Acelxdir[7] = {4, 65, 77, acelx, 224, 185, 147};
-    unsigned char Acelydir[7] = {4, 65, 78, acely, 224, 185, 147};
-    unsigned char Acelzdir[7] = {4, 65, 79, acelz, 224, 185, 147};
-    unsigned char Acelall[7] = {4, 65, 80, acelx, acely, acelz, 147};
+    unsigned char dCoolantTemp[7] = {4, 65, 5, rndCoolantTemp, 0, 185, 147};
+    unsigned char drpm[7] = {4, 65, 12, rndRPM, 224, 185, 147};
+    unsigned char dvspeed[7] = {4, 65, 13, rndSpeed, 224, 185, 147};
+    unsigned char dIATSensor[7] = {4, 65, 15, rndIAT, 0, 185, 147};
+    unsigned char dMAFSensor[7] = {4, 65, 16, rndMAF, 0, 185, 147};
+    unsigned char dBoardAirTemp[7] = {4, 65, 70, ControlAirTemp, 0, 185, 147};
+    unsigned char dControlHum[7] = {4, 65, 71, ControlHumidity, 0, 185, 147};
+    unsigned char dAcelxdir[7] = {4, 65, 77, acelx, 224, 185, 147};
+    unsigned char dAcelydir[7] = {4, 65, 78, acely, 224, 185, 147};
+    unsigned char dAcelzdir[7] = {4, 65, 79, acelz, 224, 185, 147};
+    unsigned char dAcelall[7] = {4, 65, 80, acelx, acely, acelz, 147};
 
-    if (CAN_MSGAVAIL == CAN.checkReceive())
+    
+    DIAGENB = digitalRead(DIAGEN); // When Diag Pin toggled to on
+    while (DIAGENB == 1)
     {
-        CAN.readMsgBuf(&len, buf);
-        canId = CAN.getCanId();
-        Serial.print("<");
-        Serial.print(canId);
-        Serial.print(",");
+        if (CAN_MSGAVAIL == CAN.checkReceive())
+        {
+            CAN.readMsgBuf(&len, buf);
+            canId = CAN.getCanId();
+            Serial.print("<");
+            Serial.print(canId);
+            Serial.print(",");
 
-        for (int i = 0; i < len; i++)
-        {
-            BuildMessage = BuildMessage + buf[i] + ",";
-        }
-        Serial.println(BuildMessage);
+            for (int i = 0; i < len; i++)
+            {
+                BuildMessage = BuildMessage + buf[i] + ",";
+            }
+            Serial.println(BuildMessage);
 
-        // Check wich message was received.
-        if (BuildMessage == "2,1,0,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 8, SupportedPID);
-        }
-        if (BuildMessage == "2,1,1,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, MilCleared);
-        }
+            // Check wich message was received.
+            if (BuildMessage == "2,1,0,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 8, SupportedPID);
+            }
+            if (BuildMessage == "2,1,1,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, MilCleared);
+            }
 
-        // SEND SENSOR STATUSES
-        if (BuildMessage == "2,1,5,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, CoolantTemp);
+            // SEND SENSOR STATUSES
+            if (BuildMessage == "2,1,5,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dCoolantTemp);
+            }
+            if (BuildMessage == "2,1,12,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, drpm);
+            }
+            if (BuildMessage == "2,1,13,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dvspeed);
+            }
+            if (BuildMessage == "2,1,15,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dIATSensor);
+            }
+            if (BuildMessage == "2,1,16,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dMAFSensor);
+            }
+            if (BuildMessage == "2,1,70,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dBoardAirTemp);
+                Serial.println(t);
+            }
+            if (BuildMessage == "2,1,71,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dControlHum);
+            }
+            if (BuildMessage == "2,1,77,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dAcelxdir);
+            }
+            if (BuildMessage == "2,1,78,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dAcelydir);
+            }
+            if (BuildMessage == "2,1,79,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dAcelzdir);
+            }
+            if (BuildMessage == "2,1,80,0,0,0,0,0,")
+            {
+                CAN.sendMsgBuf(0x7E8, 0, 7, dAcelzdir);
+            }
+            BuildMessage = "";
         }
-        if (BuildMessage == "2,1,12,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, rpm);
-        }
-        if (BuildMessage == "2,1,13,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, vspeed);
-        }
-        if (BuildMessage == "2,1,15,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, IATSensor);
-        }
-        if (BuildMessage == "2,1,16,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, MAFSensor);
-        }
-        if (BuildMessage == "2,1,70,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, BoardAirTemp);
-            Serial.println(t);
-        }
-        if (BuildMessage == "2,1,71,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, ControlHum);
-        }
-        if (BuildMessage == "2,1,77,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, Acelxdir);
-        }
-        if (BuildMessage == "2,1,78,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, Acelydir);
-        }
-        if (BuildMessage == "2,1,79,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, Acelzdir);
-        }
-        if (BuildMessage == "2,1,80,0,0,0,0,0,")
-        {
-            CAN.sendMsgBuf(0x7E8, 0, 7, Acelzdir);
-        }
-        BuildMessage = "";
+        delay(100);
     }
     delay(100);
 }
