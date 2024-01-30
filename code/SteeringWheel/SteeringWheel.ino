@@ -1,3 +1,4 @@
+//——————————————————————————————————————————————————————————————————————————————
 /*!
  * @file  receiveInterrupt.ino
  * @brief  CAN-BUS Shield, receive data with interrupt mode when in interrupt mode,
@@ -9,7 +10,26 @@
  * @version  V1.0
  * @date  2022-05-25
  * @url  https://github.com/DFRobot/DFRobot_MCP2515
- */
+
+ * Pin Summary
+ 
+    GP4  - ADXL345 SDA Pin
+    GP5  - ADXL345 SCL Pin
+    GP6  - DIAG Mode Interrupt
+    GP10 - DHT Temp/Humid Sensor
+    GP12 - MOSFET Upshift
+    GP13 - MOSFET Downshift
+    GP16 - CAN RX Pin - to SO (MISO)
+    GP17 - CAN CS Pin
+    GP18 - CAN SCK Pin
+    GP19 - CAN TX Pin - to SI (MOSI)
+    GP20 - CAN Interrupt Pin
+    ADC0 - CKP(RPM) Pulse Monitor
+
+    Ref: https://www.raspberrypi.com/documentation/microcontrollers/images/pico-pinout.svg
+
+ —————————————————————————————————————————————————————————————————————————————— */
+
 #include "DFRobot_MCP2515.h"
 
 const int SPI_CS_PIN = 17;
