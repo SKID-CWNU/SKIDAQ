@@ -1,4 +1,5 @@
 // ——————————————————————————————————————————————————————————————————————————————//
+//                                    SKIDAQ                                     //
 //                  Raspberry Pi Pico based SKID-FS DAQ System                   //
 //                Solenoid Valve Controlled QuickShift Interface                 //
 //                             Author: Lim Chae Won                              //
