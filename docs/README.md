@@ -5,7 +5,7 @@ Preparation for Korean Formula SAE Student(KSAE) 2024
 
 - Based on Raspberry Pi Pico - with Arduino IDE / PlatformIO
 - 4.3 inch TFT LCD with ESP32 on-wheel
-- Data Acquisition Subsystem based on 
+- Data Acquisition Subsystem based on Monolith by 
 - DRS Control included
 - IC Fuel-cut with DynoJet Powercommander V
 
