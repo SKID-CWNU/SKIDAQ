@@ -10,7 +10,7 @@
 //
 //    GP4  - ADXL345 SDA Pin
 //    GP5  - ADXL345 SCL Pin
-//    GP6  - DIAG Mode Interrupt
+//    GP7  - DIAG Mode Interrupt
 //    GP10 - DHT Temp/Humid Sensor
 //    GP12 - MOSFET Upshift
 //    GP13 - MOSFET Downshift
@@ -177,8 +177,8 @@ int picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
 int obled = LED_BUILTIN;         // On-Board LED for Basic Error Indication
 ADCInput RPulse(A0);             // For stereo/dual mikes, could use this line instead
 // ADCInput(A0, A1);
-#define DiagEN = 6 // Toggle Switch for OBD2 Simulation
-int DIAGENB = 0;   //
+#define DiagEN 7 // Toggle Switch for OBD2 Simulation
+int DIAGENB = 0; //
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    MOSFET Switch Module Configuration
@@ -199,12 +199,25 @@ void setup()
     Serial.begin(115200);
     dht.begin();        // DHT Sensor Begin
     RPulse.begin(8000); // CPS Pulse A/D Converter Begin
+    if (!accel.begin())
+    {
+        /* There was a problem detecting the ADXL345 ... check your connections */
+        Serial.println("Ooops, no ADXL345 detected ... Check your wiring!");
+        while (1)
+            ;
+    }
+    //accel.setRange(ADXL345_RANGE_16_G);
+    // accel.setRange(ADXL345_RANGE_8_G);
+    // accel.setRange(ADXL345_RANGE_4_G);
+    accel.setRange(ADXL345_RANGE_2_G);
+    Serial.println("-----ADXL345 STATUS-----");
     /* Display some basic information on this sensor */
     displaySensorDetails();
     /* Display additional settings (outside the scope of sensor_t) */
     displayDataRate();
     displayRange();
     Serial.println("");
+
     while (CAN.begin(CAN_500KBPS))
     { // init can bus : baudrate = 500k
         Serial.println("CAN BUS Shield init fail");
@@ -213,18 +226,7 @@ void setup()
         delay(3000);
         digitalWrite(obled, LOW);
     }
-    if (!accel.begin())
-    {
-        /* There was a problem detecting the ADXL345 ... check your connections */
-        Serial.println("Ooops, no ADXL345 detected ... Check your wiring!");
-        while (1)
-            ;
-    }
-    accel.setRange(ADXL345_RANGE_16_G);
-    // accel.setRange(ADXL345_RANGE_8_G);
-    // accel.setRange(ADXL345_RANGE_4_G);
-    // accel.setRange(ADXL345_RANGE_2_G);
-    Serial.println("-----ADXL345 STATUS-----");
+    delay(3000);
 }
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main(Loop) Area
@@ -256,16 +258,16 @@ void loop()
     accel.getEvent(&event);
 
     // Display the results (acceleration is measured in m/s^2)
-    Serial.print("X: ");
-    Serial.print(event.acceleration.x);
-    Serial.print("  ");
-    Serial.print("Y: ");
-    Serial.print(event.acceleration.y);
-    Serial.print("  ");
-    Serial.print("Z: ");
-    Serial.print(event.acceleration.z);
-    Serial.print("  ");
-    Serial.println("m/s^2 ");
+    // Serial.print("X: ");
+    // Serial.print(event.acceleration.x);
+    // Serial.print("  ");
+    // Serial.print("Y: ");
+    // Serial.print(event.acceleration.y);
+    // Serial.print("  ");
+    // Serial.print("Z: ");
+    // Serial.print(event.acceleration.z);
+    // Serial.print("  ");
+    // Serial.println("m/s^2 ");
 
     // CAN Area
 
@@ -283,8 +285,12 @@ void loop()
     char ControlHumidity = h;
 
     // Normal CAN Message Configuration
-    unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-    CAN.sendMsgBuf(0x7E8, 0, 8, SupportedPID);
+    unsigned char normal1MSG[8] = {rndCoolantTemp, rndRPM, rndSpeed, rndIAT, rndMAF, ControlAirTemp, ControlHumidity, 0};
+    unsigned char normal2MSG[4] = {acelx, acely, acelz, 1};
+    CAN.sendMsgBuf(canId, 0, 8, normal1MSG);
+    delay(200);
+    CAN.sendMsgBuf(0x1, 0, 4, normal2MSG);
+    delay(200);
 
     // GENERAL Sensor ROUTINE
     unsigned char SupportedPID[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -304,10 +310,15 @@ void loop()
     unsigned char dAcelzdir[7] = {4, 65, 79, acelz, 224, 185, 147};
     unsigned char dAcelall[7] = {4, 65, 80, acelx, acely, acelz, 147};
 
-    
-    DIAGENB = digitalRead(DIAGEN); // When Diag Pin toggled to on
+    DIAGENB = digitalRead(DiagEN); // When Diag Pin toggled to on
+
+    if (DIAGENB == 1)
+    {
+        Serial.println("OBD-2 Diag Mode Enabled");
+    }
     while (DIAGENB == 1)
     {
+
         if (CAN_MSGAVAIL == CAN.checkReceive())
         {
             CAN.readMsgBuf(&len, buf);
@@ -330,6 +341,10 @@ void loop()
             if (BuildMessage == "2,1,1,0,0,0,0,0,")
             {
                 CAN.sendMsgBuf(0x7E8, 0, 7, MilCleared);
+                Serial.println("OBD-2 Diag Mode Cleared");
+                delay(100);
+                BuildMessage = "";
+                break;
             }
 
             // SEND SENSOR STATUSES
@@ -339,10 +354,12 @@ void loop()
             }
             if (BuildMessage == "2,1,12,0,0,0,0,0,")
             {
+                Serial.println(rndRPM);
                 CAN.sendMsgBuf(0x7E8, 0, 7, drpm);
             }
             if (BuildMessage == "2,1,13,0,0,0,0,0,")
             {
+                Serial.println(rndSpeed);
                 CAN.sendMsgBuf(0x7E8, 0, 7, dvspeed);
             }
             if (BuildMessage == "2,1,15,0,0,0,0,0,")
@@ -382,6 +399,7 @@ void loop()
         }
         delay(100);
     }
+    DIAGENB = 0;
     delay(100);
 }
 

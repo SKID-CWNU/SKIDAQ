@@ -1,7 +1,7 @@
 {
     "sketch": "code\\DAQ_System\\DAQ_System.ino",
     "board": "rp2040:rp2040:rpipico",
-    "port": "COM12",
+    "port": "COM18",
     "output": "../build",
     "intelliSenseGen": "global",
     "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Enabled,exceptions=Disabled,dbgport=Disabled,dbglvl=All,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
