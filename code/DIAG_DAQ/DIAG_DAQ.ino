@@ -133,7 +133,15 @@ void loop()
             // read data,  len: data length, buf: data buf
             CAN.readMsgBuf(&len, buf);
             canId = CAN.getCanId();
-          
+            if (canId == 0x1)
+            {
+
+            }
+
+            if (canId == 0x1)
+            {
+                
+            }
             if (canId == 0x7E8)
             {
                 if (buf[0] == 4 && buf[1] == 65)

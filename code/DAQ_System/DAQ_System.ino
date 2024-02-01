@@ -287,7 +287,7 @@ void loop()
     // Normal CAN Message Configuration
     unsigned char normal1MSG[8] = {rndCoolantTemp, rndRPM, rndSpeed, rndIAT, rndMAF, ControlAirTemp, ControlHumidity, 0};
     unsigned char normal2MSG[4] = {acelx, acely, acelz, 1};
-    CAN.sendMsgBuf(canId, 0, 8, normal1MSG);
+    CAN.sendMsgBuf(0x0, 0, 8, normal1MSG);
     delay(200);
     CAN.sendMsgBuf(0x1, 0, 4, normal2MSG);
     delay(200);
