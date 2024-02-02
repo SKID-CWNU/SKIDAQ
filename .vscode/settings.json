@@ -5,7 +5,11 @@
         "*.tcc": "cpp"
     },
     "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
-        "clang-diagnostic-error",
         "clang-diagnostic-error"
+    ],
+    "github.codespaces.defaultExtensions": [
+
+        "GitHub.codespaces",
+        "GitHub.vscode-pull-request-github"
     ]
 }
