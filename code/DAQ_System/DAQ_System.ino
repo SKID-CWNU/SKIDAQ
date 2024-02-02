@@ -229,6 +229,12 @@ void setup()
     //  accel.setRange(ADXL345_RANGE_8_G);
     //  accel.setRange(ADXL345_RANGE_4_G);
     accel.setRange(ADXL345_RANGE_2_G);
+    Serial.println("——————————————————————————————————————————————————————————————————————————————");
+    Serial.println("*                      SKIDAQ           " + String(FW_Version) + "                            *");
+    Serial.println("*                By Rick Spooner https://github.com/WonITKorea               *");
+    Serial.println("*                       Based on Open-Ecu-Sim-OBD2-FW                        *");
+    Serial.println("*                By Rick Spooner https://github.com/spoonieau                *");
+    Serial.println("——————————————————————————————————————————————————————————————————————————————");
     Serial.println("-----ADXL345 STATUS-----");
     /* Display some basic information on this sensor */
     displaySensorDetails();
@@ -244,12 +250,6 @@ void setup()
         delay(3000);
         digitalWrite(obled, LOW);
     }
-    Serial.println("——————————————————————————————————————————————————————————————————————————————");
-    Serial.println("*                      SKIDAQ " + String(FW_Version) + "                     *");
-        Serial.println("*                By Rick Spooner https://github.com/WonITKorea                *");
-    Serial.println("*                       Based on Open-Ecu-Sim-OBD2-FW                        *");
-    Serial.println("*                By Rick Spooner https://github.com/spoonieau                *");
-    Serial.println("——————————————————————————————————————————————————————————————————————————————");
     delay(3000);
 }
 
@@ -326,6 +326,7 @@ byte mode9Supported0x00PID[8] = {0x06, 0x49, 0x00, 0x28, 0x28, 0x00, 0x00, 0x00}
 // ——————————————————————————————————————————————————————————————————————————————
 void loop()
 {
+    Serial.printf("%d\n", RPulse.read());
 
     ////Build setting return msg
     byte obd_Std_Msg[8] = {4, 65, 0x1C, (byte)(obd_Std)};
