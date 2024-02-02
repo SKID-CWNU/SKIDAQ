@@ -204,6 +204,14 @@ int DIAGENB = 0; //
 #define MOSUP_PIN 12
 #define MOSDOWN_PIN 13
 
+void blink(int deltime)
+{
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(deltime);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(deltime);
+}
+
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main Program Setup
 // ——————————————————————————————————————————————————————————————————————————————
@@ -235,6 +243,7 @@ void setup()
     Serial.println("*                       Based on Open-Ecu-Sim-OBD2-FW                        *");
     Serial.println("*                By Rick Spooner https://github.com/spoonieau                *");
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
+    blink(1000);
     Serial.println("-----ADXL345 STATUS-----");
     /* Display some basic information on this sensor */
     displaySensorDetails();
@@ -246,9 +255,8 @@ void setup()
     { // init can bus : baudrate = 500k
         Serial.println("CAN BUS Shield init fail");
         Serial.println("Please Init CAN BUS Shield again");
-        digitalWrite(obled, HIGH);
-        delay(3000);
-        digitalWrite(obled, LOW);
+        blink(500);
+        blink(500);
     }
     delay(3000);
 }
@@ -326,7 +334,6 @@ byte mode9Supported0x00PID[8] = {0x06, 0x49, 0x00, 0x28, 0x28, 0x00, 0x00, 0x00}
 // ——————————————————————————————————————————————————————————————————————————————
 void loop()
 {
-    Serial.printf("%d\n", RPulse.read());
 
     ////Build setting return msg
     byte obd_Std_Msg[8] = {4, 65, 0x1C, (byte)(obd_Std)};
