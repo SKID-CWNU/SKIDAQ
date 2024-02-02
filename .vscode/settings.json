@@ -11,5 +11,15 @@
 
         "GitHub.codespaces",
         "GitHub.vscode-pull-request-github"
-    ]
+    ],
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.cursorBlinking": "smooth",
+    "diffEditor.codeLens": true,
+    "editor.cursorSurroundingLinesStyle": "all",
+    "files.autoSave": "afterDelay",
+    "editor.smartSelect.selectLeadingAndTrailingWhitespace": true,
+    "editor.semanticHighlighting.enabled": false,
+    "editor.smoothScrolling": true,
+    "editor.stablePeek": true,
+    "diffEditor.experimental.showMoves": true
 }
