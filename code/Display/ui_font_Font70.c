@@ -4,7 +4,7 @@
  * Opts: --bpp 8 --size 70 --font C:\Users\wonit\Documents\SquareLine\assets\static\alternative\Pretendard-Black.ttf -o C:\Users\wonit\Documents\SquareLine\assets\static\alternative\ui_font_Font70.c --format lvgl -r 0x20-0x7f --no-compress --no-prefilter
  ******************************************************************************/
 
-#include "../ui.h"
+#include "ui.h"
 
 #ifndef UI_FONT_FONT70
 #define UI_FONT_FONT70 1

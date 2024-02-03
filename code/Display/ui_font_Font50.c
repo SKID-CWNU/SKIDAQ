@@ -4,7 +4,7 @@
  * Opts: --bpp 2 --size 50 --font C:\Users\wonit\Documents\SquareLine\assets\static\alternative\Pretendard-Bold.ttf -o C:\Users\wonit\Documents\SquareLine\assets\static\alternative\ui_font_Font50.c --format lvgl -r 0x20-0x7f --no-compress --no-prefilter
  ******************************************************************************/
 
-#include "../ui.h"
+#include "ui.h"
 
 #ifndef UI_FONT_FONT50
 #define UI_FONT_FONT50 1

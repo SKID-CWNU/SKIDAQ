@@ -1,8 +1,9 @@
 {
-    "sketch": "code\\SteeringWheel\\SteeringWheel.ino",
-    "board": "rp2040:rp2040:rpipico",
-    "port": "COM18",
+    "sketch": "code\\Display\\Display.ino",
+    "board": "esp32:esp32:esp32s3",
+    "port": "COM4",
     "output": "../build",
     "intelliSenseGen": "global",
-    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Enabled,exceptions=Disabled,dbgport=Disabled,dbglvl=All,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
+    "configuration": "PSRAM=enabled,FlashMode=qio,FlashSize=4M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=921600,DebugLevel=none",
+    "programmer": "esptool"
 }

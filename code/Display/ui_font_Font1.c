@@ -4,7 +4,7 @@
  * Opts: --bpp 4 --size 80 --font C:\Users\wonit\Documents\SquareLine\assets\static\alternative\Pretendard-ExtraBold.ttf -o C:\Users\wonit\Documents\SquareLine\assets\static\alternative\ui_font_Font1.c --format lvgl -r 0x20-0x7f --no-compress --no-prefilter
  ******************************************************************************/
 
-#include "../ui.h"
+#include "ui.h"
 
 #ifndef UI_FONT_FONT1
 #define UI_FONT_FONT1 1
