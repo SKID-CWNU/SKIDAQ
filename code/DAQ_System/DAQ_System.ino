@@ -11,6 +11,7 @@
 //    GP4  - ADXL345 SDA Pin
 //    GP5  - ADXL345 SCL Pin
 //    GP7  - DIAG Mode Interrupt
+//    GP9  - DynoJet Interrupt Output
 //    GP10 - DHT Temp/Humid Sensor
 //    GP12 - MOSFET Upshift
 //    GP13 - MOSFET Downshift
@@ -201,6 +202,7 @@ int DIAGENB = 0; //
 // ——————————————————————————————————————————————————————————————————————————————
 //    MOSFET Switch Module Configuration
 // ——————————————————————————————————————————————————————————————————————————————
+#define DynoInt 9
 #define MOSUP_PIN 12
 #define MOSDOWN_PIN 13
 
@@ -221,6 +223,7 @@ void setup()
     pinMode(obled, OUTPUT);
     pinMode(MOSUP_PIN, OUTPUT);
     pinMode(MOSDOWN_PIN, OUTPUT);
+    pinMode(DynoInt, OUTPUT);
     pinMode(DiagEN, INPUT);
     Serial.begin(115200);
     delay(100);
@@ -393,6 +396,26 @@ void loop()
                 canMessageRead = canMessageRead + buf[i] + ",";
             }
             Serial.println(canMessageRead);
+            if (canMessageRead == "0,1,1,")
+            {
+                digitalWrite(DynoInt, HIGH);
+                delay(100);
+                digitalWrite(MOSUP_PIN, HIGH);
+                delay(200);
+                digitalWrite(DynoInt, LOW);
+                digitalWrite(MOSUP_PIN, LOW);
+                delay(100);
+            }
+            if (canMessageRead == "0,1,2,")
+            {
+                digitalWrite(DynoInt, HIGH);
+                delay(100);
+                digitalWrite(MOSDOWN_PIN, HIGH);
+                delay(200);
+                digitalWrite(DynoInt, LOW);
+                digitalWrite(MOSDOWN_PIN, LOW);
+                delay(100);
+            }
             //=================================================================
             // Return CAN-BUS Messages - SUPPORTED PID's
             //=================================================================
@@ -572,8 +595,8 @@ void loop()
 
             canMessageRead = "";
         }
-        delay(100);
     }
+    delay(100);
 }
 
 // ——————————————————————————————————————————————————————————————————————————————
