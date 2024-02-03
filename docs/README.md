@@ -9,4 +9,4 @@ Preparation for Korean Formula SAE Student(KSAE) 2024
 - DRS Control included
 - IC Fuel-cut with DynoJet Powercommander V
 
-SKIDAQ © 2024 by Lim ChaeWon is licensed under CC BY-SA 4.0
+SKIDAQ © 2024 by Lim ChaeWon is licensed under GPL 3.0
