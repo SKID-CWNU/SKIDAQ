@@ -82,7 +82,7 @@ Arduino_RPi_DPI_RGBPanel *lcd = new Arduino_RPi_DPI_RGBPanel(
 /*******************************************************************************
    Please config the touch panel in touch.h
  ******************************************************************************/
-#include "touch.h"
+//#include "touch.h"
 
 #ifdef USE_UI
 /* Change to your screen resolution */

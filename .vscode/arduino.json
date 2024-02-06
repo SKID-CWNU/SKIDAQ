@@ -1,9 +1,9 @@
 {
     "sketch": "code\\Display\\Display.ino",
-    "board": "esp32:esp32:esp32s3",
+    "board": "rp2040:rp2040:rpipico",
     "port": "COM4",
     "output": "../build",
     "intelliSenseGen": "global",
-    "configuration": "PSRAM=enabled,FlashMode=qio,FlashSize=4M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=921600,DebugLevel=none",
+    "configuration": "flash=2097152_0,freq=133,opt=Small,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default",
     "programmer": "esptool"
 }
