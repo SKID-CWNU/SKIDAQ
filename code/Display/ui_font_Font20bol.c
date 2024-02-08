@@ -4,7 +4,7 @@
  * Opts: --bpp 8 --size 20 --font C:\Users\wonit\Documents\SquareLine\assets\static\alternative\Pretendard-Bold.ttf -o C:\Users\wonit\Documents\SquareLine\assets\static\alternative\ui_font_Font20bol.c --format lvgl -r 0x20-0x7f --no-compress --no-prefilter
  ******************************************************************************/
 
-#include "../ui.h"
+#include "ui.h"
 
 #ifndef UI_FONT_FONT20BOL
 #define UI_FONT_FONT20BOL 1
