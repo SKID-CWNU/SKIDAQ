@@ -4,6 +4,7 @@
 // Project name: SquareLine_Project
 
 #include "ui.h"
+#include <Arduino.h>
 
 void ui_Screen1_screen_init(void)
 {

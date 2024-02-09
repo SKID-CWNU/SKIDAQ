@@ -17,8 +17,9 @@ unsigned long watch_tick;
 #define SERIAL_BAUD 115200
 #define I2C_DEV_ADDR 0x55
 
-extern ui_Label1;
-extern ui_Label4;
+extern lv_obj_t * ui_Spinbox1;
+extern lv_obj_t * ui_Spinbox2;
+extern lv_obj_t * ui_Spinbox3;
 int rpmVal = 0;
 int spVal = 0;
 int coolVal = 0;
@@ -151,7 +152,8 @@ void onReceive(int len)
   Serial.printf("onReceive[%d]: ", len);
   while (Wire.available())
   {
-
+    spVal = Wire.read();
+    lv_spinbox_set_value(ui_Spinbox2, spVal);
     Serial.write(Wire.read());
   }
   Serial.println();
@@ -227,7 +229,6 @@ void setup()
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);
 #endif
-
 
 #ifdef USE_UI
   ui_init(); // ui from Squareline or GUI Guider
