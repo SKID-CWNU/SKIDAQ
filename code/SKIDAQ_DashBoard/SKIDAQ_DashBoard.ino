@@ -1,3 +1,9 @@
+// ——————————————————————————————————————————————————————————————————————————————//
+//                        SKIDAQ Steering Wheel Dashboard                        //
+//                  Raspberry Pi Pico based SKID-FS DAQ System                   //
+//                             Author: Lim ChaeWon                               //
+//            SKIDAQ © 2024 by Lim ChaeWon is licensed under GPL 3.0             //
+// ——————————————————————————————————————————————————————————————————————————————//
 
 #include <Wire.h>
 #include <SPI.h>

@@ -1,22 +1,10 @@
 // ——————————————————————————————————————————————————————————————————————————————//
-//                                    SKIDAQ                                     //
+//                        SKIDAQ OBD-2 Diagnostic Module                         //
 //                  Raspberry Pi Pico based SKID-FS DAQ System                   //
-//                Solenoid Valve Controlled QuickShift Interface                 //
-//                             Author: Lim Chae Won                              //
-//                             The MIT License (MIT)                             //
+//                             Author: Lim ChaeWon                               //
+//            SKIDAQ © 2024 by Lim ChaeWon is licensed under GPL 3.0             //
 // ——————————————————————————————————————————————————————————————————————————————//
-/*!
- * @file  DIAG_DAQ.ino
- * @brief  Raspberry Pi Pico based SKID-FS DAQ System Diganosing Device
- * @n  the data coming can't be too fast, must >20ms, or else you can use check mode
- * @copyright  Copyright (c) Lim Chae Won 2024
- * @license  The MIT License (MIT)
- * @author  SKID-CWNU (Lim Chae Won)
- * @maintainer Lim Chae Won
- * @version  V1.0
- * @date  2024-01-20
- * @url
- * */
+
 #include "DFRobot_MCP2515.h"
 
 const int SPI_CS_PIN = 17;

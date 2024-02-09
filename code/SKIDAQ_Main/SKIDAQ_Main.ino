@@ -2,8 +2,8 @@
 //                                    SKIDAQ                                     //
 //                  Raspberry Pi Pico based SKID-FS DAQ System                   //
 //                Solenoid Valve Controlled QuickShift Interface                 //
-//                             Author: Lim Chae Won                              //
-//                             The MIT License (MIT)                             //
+//                             Author: Lim ChaeWon                               //
+//            SKIDAQ © 2024 by Lim ChaeWon is licensed under GPL 3.0             //
 // ——————————————————————————————————————————————————————————————————————————————//
 //
 //    Pin Summary
