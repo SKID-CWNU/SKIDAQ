@@ -1,9 +1,9 @@
 {
     "sketch": "code\\Display\\Display.ino",
     "board": "esp32:esp32:esp32s3",
-    "port": "COM4",
+    "port": "COM5",
     "output": "../build",
     "intelliSenseGen": "global",
-    "configuration": "PSRAM=enabled,FlashMode=qio,FlashSize=4M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=921600,DebugLevel=none",
-    "programmer": "esptool"
+    "programmer": "esptool",
+    "configuration": "JTAGAdapter=default,PSRAM=enabled,FlashMode=qio,FlashSize=4M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none"
 }
