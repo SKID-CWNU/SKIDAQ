@@ -1,9 +1,21 @@
-// ——————————————————————————————————————————————————————————————————————————————//
-//                        SKIDAQ OBD-2 Diagnostic Module                         //
-//                  Raspberry Pi Pico based SKID-FS DAQ System                   //
-//                             Author: Lim ChaeWon                               //
-//            SKIDAQ © 2024 by Lim ChaeWon is licensed under GPL 3.0             //
-// ——————————————————————————————————————————————————————————————————————————————//
+/* ——————————————————————————————————————————————————————————————————————————————
+    SKIDAQ On-Board-Diagnostic Module
+    Raspberry Pi Pico based SKID Datalogger Diagnostics Module
+    Copyright © 2024 by Lim ChaeWon
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+——————————————————————————————————————————————————————————————————————————————*/
 
 #include "DFRobot_MCP2515.h"
 

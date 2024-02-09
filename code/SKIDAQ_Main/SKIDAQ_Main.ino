@@ -1,30 +1,41 @@
-// ——————————————————————————————————————————————————————————————————————————————//
-//                                    SKIDAQ                                     //
-//                  Raspberry Pi Pico based SKID-FS DAQ System                   //
-//                Solenoid Valve Controlled QuickShift Interface                 //
-//                             Author: Lim ChaeWon                               //
-//            SKIDAQ © 2024 by Lim ChaeWon is licensed under GPL 3.0             //
-// ——————————————————————————————————————————————————————————————————————————————//
-//
-//    Pin Summary
-//
-//    GP4  - ADXL345 SDA Pin
-//    GP5  - ADXL345 SCL Pin
-//    GP7  - DIAG Mode Interrupt
-//    GP9  - DynoJet Interrupt Output
-//    GP10 - DHT Temp/Humid Sensor
-//    GP12 - MOSFET Upshift
-//    GP13 - MOSFET Downshift
-//    GP16 - CAN RX Pin - to SO (MISO)
-//    GP17 - CAN CS Pin
-//    GP18 - CAN SCK Pin
-//    GP19 - CAN TX Pin - to SI (MOSI)
-//    GP20 - CAN Interrupt Pin
-//    ADC0 - CKP(RPM) Pulse Monitor
-//
-//    Ref: https://www.raspberrypi.com/documentation/microcontrollers/images/pico-pinout.svg
-//
-// ——————————————————————————————————————————————————————————————————————————————//
+/* ——————————————————————————————————————————————————————————————————————————————
+    SKIDAQ Main Code
+    Raspberry Pi Pico based SKID Datalogger Module
+    with Solenoid Valve Controlled QuickShift Interface
+    Copyright © 2024 by Lim ChaeWon
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+    Pin Summary
+        GP4  - ADXL345 SDA Pin
+        GP5  - ADXL345 SCL Pin
+        GP7  - DIAG Mode Interrupt
+        GP9  - DynoJet Interrupt Output
+        GP10 - DHT Temp/Humid Sensor
+        GP12 - MOSFET Upshift
+        GP13 - MOSFET Downshift
+        GP16 - CAN RX Pin - to SO (MISO)
+        GP17 - CAN CS Pin
+        GP18 - CAN SCK Pin
+        GP19 - CAN TX Pin - to SI (MOSI)
+        GP20 - CAN Interrupt Pin
+        ADC0 - CKP(RPM) Pulse Monitor
+
+    Ref: https://www.raspberrypi.com/documentation/microcontrollers/images/pico-pinout.svg
+
+——————————————————————————————————————————————————————————————————————————————*/
 
 #include <ADCInput.h>
 #include <Adafruit_Sensor.h>
