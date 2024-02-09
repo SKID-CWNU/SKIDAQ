@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#include "lvgl.h"
+#include "C:\Users\wonit\Documents\Arduino\libraries\lvgl\lvgl.h"
 
 #include "ui_helpers.h"
 #include "ui_events.h"
@@ -20,13 +20,13 @@ extern lv_obj_t * ui_Screen1;
 extern lv_obj_t * ui_Container1;
 extern lv_obj_t * ui_Container5;
 extern lv_obj_t * ui_Container4;
-extern lv_obj_t * ui_Label1;
+extern lv_obj_t * ui_Spinbox2;
 extern lv_obj_t * ui_Container10;
 extern lv_obj_t * ui_Label3;
 extern lv_obj_t * ui_Container6;
 extern lv_obj_t * ui_Spinbox1;
 extern lv_obj_t * ui_Container7;
-extern lv_obj_t * ui_Label4;
+extern lv_obj_t * ui_Spinbox3;
 extern lv_obj_t * ui_Container11;
 extern lv_obj_t * ui_Label6;
 extern lv_obj_t * ui_Container2;
@@ -40,12 +40,12 @@ extern lv_obj_t * ui____initial_actions0;
 
 
 LV_FONT_DECLARE(ui_font_Font16);
+LV_FONT_DECLARE(ui_font_Font1bol);
+LV_FONT_DECLARE(ui_font_Font20bol);
 LV_FONT_DECLARE(ui_font_Font25);
 LV_FONT_DECLARE(ui_font_Font30);
 LV_FONT_DECLARE(ui_font_Font50);
 LV_FONT_DECLARE(ui_font_Font70);
-LV_FONT_DECLARE(ui_font_Font1bol);
-LV_FONT_DECLARE(ui_font_Font20bol);
 
 void ui_init(void);
 

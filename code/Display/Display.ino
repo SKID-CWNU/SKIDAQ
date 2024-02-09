@@ -1,96 +1,98 @@
 #include <Wire.h>
 #include <SPI.h>
 
-#define USE_UI    //if you want to use the ui export from Squareline, please do not annotate this line.
+#define USE_UI // if you want to use the ui export from Squareline, please do not annotate this line.
 
 #if defined USE_UI
 #include "lvgl.h"
 #include "ui.h"
+#include "lv_conf.h"
 #endif
+unsigned long watch_tick;
 
 #include <Arduino_GFX_Library.h>
 #define TFT_BL 2
 #define GFX_BL DF_GFX_BL // default backlight pin, you may replace DF_GFX_BL to actual backlight pin
 
-#define SERIAL_BAUD 9600
-HardwareSerial cardSerial(1);//Declare serial port 1
-unsigned char buffer[256]; // buffer array for data recieve over serial port
-int count_1 = 0;   // counter for buffer array
-void clearBufferArray()              // function to clear buffer array
-{
-  for (int i = 0; i < count_1; i++)
-  {
-    buffer[i] = 0; // clear all index of array with command NULL
-  }
-}
+#define SERIAL_BAUD 115200
+#define I2C_DEV_ADDR 0x55
+
+extern ui_Label1;
+extern ui_Label4;
+int rpmVal = 0;
+int spVal = 0;
+int coolVal = 0;
+int tempVal = 0;
+uint32_t i = 0;
+#define sda 17
+#define scl 18
 
 /******Please define a corresponding line based on your development board.************/
 #define Display_43
-//#define Display_50
-//#define Display_70
+// #define Display_50
+// #define Display_70
 /*******************************************************************************
- * Screen Driver Configuration 
-*******************************************************************************/
-#if defined (Display_43)         //4.3INCH 480x272
+ * Screen Driver Configuration
+ *******************************************************************************/
+#if defined(Display_43) // 4.3INCH 480x272
 Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
-  GFX_NOT_DEFINED /* CS */, GFX_NOT_DEFINED /* SCK */, GFX_NOT_DEFINED /* SDA */,
-  40 /* DE */, 41 /* VSYNC */, 39 /* HSYNC */, 42 /* PCLK */,
-  45 /* R0 */, 48 /* R1 */, 47 /* R2 */, 21 /* R3 */, 14 /* R4 */,
-  5 /* G0 */, 6 /* G1 */, 7 /* G2 */, 15 /* G3 */, 16 /* G4 */, 4 /* G5 */,
-  8 /* B0 */, 3 /* B1 */, 46 /* B2 */, 9 /* B3 */, 1 /* B4 */
+    GFX_NOT_DEFINED /* CS */, GFX_NOT_DEFINED /* SCK */, GFX_NOT_DEFINED /* SDA */,
+    40 /* DE */, 41 /* VSYNC */, 39 /* HSYNC */, 42 /* PCLK */,
+    45 /* R0 */, 48 /* R1 */, 47 /* R2 */, 21 /* R3 */, 14 /* R4 */,
+    5 /* G0 */, 6 /* G1 */, 7 /* G2 */, 15 /* G3 */, 16 /* G4 */, 4 /* G5 */,
+    8 /* B0 */, 3 /* B1 */, 46 /* B2 */, 9 /* B3 */, 1 /* B4 */
 );
 Arduino_RPi_DPI_RGBPanel *lcd = new Arduino_RPi_DPI_RGBPanel(
-  bus,
-  480 /* width */, 0 /* hsync_polarity */, 8 /* hsync_front_porch */, 4 /* hsync_pulse_width */, 43 /* hsync_back_porch */,
-  272 /* height */, 0 /* vsync_polarity */, 8 /* vsync_front_porch */, 4 /* vsync_pulse_width */, 12 /* vsync_back_porch */,
-  1 /* pclk_active_neg */, 7000000 /* prefer_speed */, true /* auto_flush */);
-  
-#elif defined (Display_50)         //5.0INCH 800x480
+    bus,
+    480 /* width */, 0 /* hsync_polarity */, 8 /* hsync_front_porch */, 4 /* hsync_pulse_width */, 43 /* hsync_back_porch */,
+    272 /* height */, 0 /* vsync_polarity */, 8 /* vsync_front_porch */, 4 /* vsync_pulse_width */, 12 /* vsync_back_porch */,
+    1 /* pclk_active_neg */, 7000000 /* prefer_speed */, true /* auto_flush */);
+
+#elif defined(Display_50) // 5.0INCH 800x480
 Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
-  GFX_NOT_DEFINED /* CS */, GFX_NOT_DEFINED /* SCK */, GFX_NOT_DEFINED /* SDA */,
-  40 /* DE */, 41 /* VSYNC */, 39 /* HSYNC */, 0 /* PCLK */,
-  45 /* R0 */, 48 /* R1 */, 47 /* R2 */, 21 /* R3 */, 14 /* R4 */,
-  5 /* G0 */, 6 /* G1 */, 7 /* G2 */, 15 /* G3 */, 16 /* G4 */, 4 /* G5 */,
-  8 /* B0 */, 3 /* B1 */, 46 /* B2 */, 9 /* B3 */, 1 /* B4 */
+    GFX_NOT_DEFINED /* CS */, GFX_NOT_DEFINED /* SCK */, GFX_NOT_DEFINED /* SDA */,
+    40 /* DE */, 41 /* VSYNC */, 39 /* HSYNC */, 0 /* PCLK */,
+    45 /* R0 */, 48 /* R1 */, 47 /* R2 */, 21 /* R3 */, 14 /* R4 */,
+    5 /* G0 */, 6 /* G1 */, 7 /* G2 */, 15 /* G3 */, 16 /* G4 */, 4 /* G5 */,
+    8 /* B0 */, 3 /* B1 */, 46 /* B2 */, 9 /* B3 */, 1 /* B4 */
 );
 Arduino_RPi_DPI_RGBPanel *lcd = new Arduino_RPi_DPI_RGBPanel(
-  bus,
-  800 /* width */, 0 /* hsync_polarity */, 210 /* hsync_front_porch */, 4 /* hsync_pulse_width */, 43 /* hsync_back_porch */,
-  480 /* height */, 0 /* vsync_polarity */, 22 /* vsync_front_porch */, 4 /* vsync_pulse_width */, 12 /* vsync_back_porch */,
-  1 /* pclk_active_neg */, 16000000 /* prefer_speed */, true /* auto_flush */);
-  
-#elif defined (Display_70)       //7.0INCH 800x480
+    bus,
+    800 /* width */, 0 /* hsync_polarity */, 210 /* hsync_front_porch */, 4 /* hsync_pulse_width */, 43 /* hsync_back_porch */,
+    480 /* height */, 0 /* vsync_polarity */, 22 /* vsync_front_porch */, 4 /* vsync_pulse_width */, 12 /* vsync_back_porch */,
+    1 /* pclk_active_neg */, 16000000 /* prefer_speed */, true /* auto_flush */);
+
+#elif defined(Display_70) // 7.0INCH 800x480
 Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
-  GFX_NOT_DEFINED /* CS */, GFX_NOT_DEFINED /* SCK */, GFX_NOT_DEFINED /* SDA */,
-  41 /* DE */, 40 /* VSYNC */, 39 /* HSYNC */, 0 /* PCLK */,
-  14 /* R0 */, 21 /* R1 */, 47 /* R2 */, 48 /* R3 */, 45 /* R4 */,
-  9 /* G0 */, 46 /* G1 */, 3 /* G2 */, 8 /* G3 */, 16 /* G4 */, 1 /* G5 */,
-  15 /* B0 */, 7 /* B1 */, 6 /* B2 */, 5 /* B3 */, 4 /* B4 */
+    GFX_NOT_DEFINED /* CS */, GFX_NOT_DEFINED /* SCK */, GFX_NOT_DEFINED /* SDA */,
+    41 /* DE */, 40 /* VSYNC */, 39 /* HSYNC */, 0 /* PCLK */,
+    14 /* R0 */, 21 /* R1 */, 47 /* R2 */, 48 /* R3 */, 45 /* R4 */,
+    9 /* G0 */, 46 /* G1 */, 3 /* G2 */, 8 /* G3 */, 16 /* G4 */, 1 /* G5 */,
+    15 /* B0 */, 7 /* B1 */, 6 /* B2 */, 5 /* B3 */, 4 /* B4 */
 );
 Arduino_RPi_DPI_RGBPanel *lcd = new Arduino_RPi_DPI_RGBPanel(
-  bus,
-  800 /* width */, 0 /* hsync_polarity */, 210 /* hsync_front_porch */, 1 /* hsync_pulse_width */, 46 /* hsync_back_porch */,
-  480 /* height */, 0 /* vsync_polarity */, 22 /* vsync_front_porch */, 1 /* vsync_pulse_width */, 23 /* vsync_back_porch */,
-  0 /* pclk_active_neg */, 16000000 /* prefer_speed */, true /* auto_flush */);
+    bus,
+    800 /* width */, 0 /* hsync_polarity */, 210 /* hsync_front_porch */, 1 /* hsync_pulse_width */, 46 /* hsync_back_porch */,
+    480 /* height */, 0 /* vsync_polarity */, 22 /* vsync_front_porch */, 1 /* vsync_pulse_width */, 23 /* vsync_back_porch */,
+    0 /* pclk_active_neg */, 16000000 /* prefer_speed */, true /* auto_flush */);
 #endif
 
 /*******************************************************************************
  * Screen Driver Configuration  end
-*******************************************************************************/
-
+ *******************************************************************************/
 
 /*******************************************************************************
    Please config the touch panel in touch.h
  ******************************************************************************/
-//#include "touch.h"
+#include "touch.h"
 
 #ifdef USE_UI
 /* Change to your screen resolution */
 static uint32_t screenWidth;
 static uint32_t screenHeight;
 static lv_disp_draw_buf_t draw_buf;
-static lv_color_t disp_draw_buf[480 * 272 / 10];      //5,7inch: lv_color_t disp_draw_buf[800*480/10]            4.3inch: lv_color_t disp_draw_buf[480*272/10]
-//static lv_color_t disp_draw_buf;
+static lv_color_t disp_draw_buf[480 * 272 / 10]; // 5,7inch: lv_color_t disp_draw_buf[800*480/10]            4.3inch: lv_color_t disp_draw_buf[480*272/10]
+// static lv_color_t disp_draw_buf;
 static lv_disp_drv_t disp_drv;
 
 /* Display flushing */
@@ -119,11 +121,11 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
       /*Set the coordinates*/
       data->point.x = touch_last_x;
       data->point.y = touch_last_y;
-      Serial.print( "Data x :" );
-      Serial.println( touch_last_x );
+      Serial.print("Data x :");
+      Serial.println(touch_last_x);
 
-      Serial.print( "Data y :" );
-      Serial.println( touch_last_y );
+      Serial.print("Data y :");
+      Serial.println(touch_last_y);
     }
     else if (touch_released())
     {
@@ -138,15 +140,35 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 }
 #endif
 
+void onRequest()
+{
+  Wire.print(i++);
+  Wire.print(" Packets.");
+  Serial.println("onRequest");
+}
+void onReceive(int len)
+{
+  Serial.printf("onReceive[%d]: ", len);
+  while (Wire.available())
+  {
+
+    Serial.write(Wire.read());
+  }
+  Serial.println();
+}
+
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(SERIAL_BAUD);
   Serial.println("LVGL Widgets Demo");
-  cardSerial.begin(SERIAL_BAUD, SERIAL_8N1, 18, 17); //4.3 /*Serial Port Initializing 1*/18-RX\17-TX 
-// CONNECT 17 - RX, 18 - TX ON rpi Pico
+  Serial.setDebugOutput(true);
+  Wire.onReceive(onReceive);
+  Wire.onRequest(onRequest);
+  Wire.setPins(sda, scl);
+  Wire.begin((uint8_t)I2C_DEV_ADDR);
 
 #if defined(Display_50) || defined(Display_70)
-  //IO Port Pins
+  // IO Port Pins
   pinMode(38, OUTPUT);
   digitalWrite(38, LOW);
   pinMode(17, OUTPUT);
@@ -164,7 +186,7 @@ void setup()
   digitalWrite(35, LOW);
   pinMode(38, OUTPUT);
   digitalWrite(38, LOW);
-  pinMode(0, OUTPUT);//TOUCH-CS
+  pinMode(0, OUTPUT); // TOUCH-CS
 #endif
 
   // Init Display
@@ -172,7 +194,7 @@ void setup()
   lcd->fillScreen(BLACK);
   lcd->setTextSize(2);
   delay(200);
-  
+
 #ifdef USE_UI
   lv_init();
 
@@ -200,14 +222,15 @@ void setup()
   indev_drv.read_cb = my_touchpad_read;
   lv_indev_drv_register(&indev_drv);
 #endif
-  
+
 #ifdef TFT_BL
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);
 #endif
 
+
 #ifdef USE_UI
-  ui_init();//ui from Squareline or GUI Guider
+  ui_init(); // ui from Squareline or GUI Guider
 #else
   lcd->fillScreen(RED);
   delay(800);
@@ -218,23 +241,13 @@ void setup()
   lcd->fillScreen(GREEN);
   delay(800);
 #endif
-  Serial.println( "Setup done" );
+  Serial.println("Setup done");
 }
 
 void loop()
 {
-  if (cardSerial.available())              // if date is comming from softwareserial port ==> data is comming from SoftSerial shield
-  {
-    while (cardSerial.available())         // reading data into char array
-    {
-      buffer[count_1++] = cardSerial.read();   // writing data into array
-      if (count_1 == 256)break;
-    }
-    Serial.write(buffer, count_1);           // if no data transmission ends, write buffer to hardware serial port
-    clearBufferArray();              // call clearBufferArray function to clear the storaged data from the array
-    count_1 = 0;                       // set counter of while loop to zero
-  }
-  while(1)
+
+  while (1)
   {
 #ifdef USE_UI
     lv_timer_handler();
