@@ -212,30 +212,10 @@ void loop()
 {
   drsVal = digitalRead(drs);
   CANMessage frame;
-  if (gBlinkLedDate < millis())
+   while (ACAN_ESP32::can.receive(frame))
   {
-    gBlinkLedDate += 500;
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    Serial.print("Sent: ");
-    Serial.print(gSentFrameCount);
-    Serial.print(" ");
-    Serial.print("Receive: ");
+        Serial.print("Receive: ");
     Serial.print(gReceivedFrameCount);
-    Serial.print(" ");
-    Serial.print(" STATUS 0x");
-    Serial.print(TWAI_STATUS_REG, HEX);
-    Serial.print(" RXERR ");
-    Serial.print(TWAI_RX_ERR_CNT_REG);
-    Serial.print(" TXERR ");
-    Serial.println(TWAI_TX_ERR_CNT_REG);
-    const bool ok = ACAN_ESP32::can.tryToSend(frame);
-    if (ok)
-    {
-      gSentFrameCount += 1;
-    }
-  }
-  while (ACAN_ESP32::can.receive(frame))
-  {
     gReceivedFrameCount += 1;
   }
 

@@ -1,9 +1,9 @@
 {
-    "sketch": "code\\Display\\Display.ino",
+    "sketch": "code\\SKIDAQ_OBD2\\SKIDAQ_OBD2.ino",
     "board": "esp32:esp32:esp32s3",
-    "port": "COM5",
+    "port": "COM18",
     "output": "../build",
     "intelliSenseGen": "global",
     "programmer": "esptool",
-    "configuration": "JTAGAdapter=default,PSRAM=enabled,FlashMode=qio,FlashSize=4M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none"
+    "configuration": "JTAGAdapter=builtin,PSRAM=enabled,FlashMode=qio,FlashSize=4M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none"
 }

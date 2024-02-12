@@ -21,7 +21,6 @@
     Pin Summary
         GP4  - ADXL345 SDA Pin
         GP5  - ADXL345 SCL Pin
-        GP7  - DIAG Mode Interrupt
         GP9  - DynoJet Interrupt Output
         GP10 - DHT Temp/Humid Sensor
         GP12 - MOSFET Upshift
