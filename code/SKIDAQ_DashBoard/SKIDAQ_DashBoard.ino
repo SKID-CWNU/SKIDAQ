@@ -20,7 +20,6 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <Arduino_GFX_Library.h>
-#include <ACAN_ESP32.h>
 #include <esp_chip_info.h>
 #include <esp_flash.h>
 #include <core_version.h>
@@ -34,16 +33,14 @@
 #define GFX_BL DF_GFX_BL // default backlight pin, you may replace DF_GFX_BL to actual backlight pin
 
 #define SERIAL_BAUD 115200
-#define rx 18
-#define tx 17
-#define drs 38
+#define I2C_DEV_ADDR 0x55
+#define drs 17
 
 int rpmVal = 0;
 int spVal = 0;
 int drsVal = 0;
 int tempVal = 0;
 uint32_t i = 0;
-static const uint32_t DESIRED_BIT_RATE = 1000UL * 1000UL; // 1 Mb/s
 
 extern lv_obj_t *ui_Spinbox1;
 extern lv_obj_t *ui_Spinbox2;
@@ -96,65 +93,39 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 
 void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data) {}
 
+void onRequest()
+{
+  Wire.print(i++);
+  Wire.print(" Packets.");
+  Serial.println("onRequest");
+}
+
+void onReceive(int len)
+{
+  Serial.printf("onReceive[%d]: ", len);
+  while (Wire.available())
+  {
+    Serial.write(Wire.read());
+  }
+  Serial.println();
+}
 void setup()
 {
   Serial.begin(SERIAL_BAUD);
   Serial.setDebugOutput(true);
-  esp_chip_info_t chip_info;
-  esp_chip_info(&chip_info);
-  Serial.print("ESP32 Arduino Release: ");
-  Serial.println(ARDUINO_ESP32_RELEASE);
-  Serial.print("ESP32 Chip Revision: ");
-  Serial.println(chip_info.revision);
-  Serial.print("ESP32 SDK: ");
-  Serial.println(ESP.getSdkVersion());
-  Serial.print("ESP32 Flash: ");
-  uint32_t size_flash_chip;
-  esp_flash_get_size(NULL, &size_flash_chip);
-  Serial.print(size_flash_chip / (1024 * 1024));
-  Serial.print(" MB ");
-  Serial.println(((chip_info.features & CHIP_FEATURE_EMB_FLASH) != 0) ? "(embeded)" : "(external)");
-  Serial.print("APB CLOCK: ");
-  Serial.print(APB_CLK_FREQ);
-  Serial.println(" Hz");
   //--- Configure ESP32 CAN
   Serial.println("Configure ESP32 CAN");
-  ACAN_ESP32_Settings settings(DESIRED_BIT_RATE);
-  settings.mRequestedCANMode = ACAN_ESP32_Settings::LoopBackMode;
-  settings.mRxPin = GPIO_NUM_17; // Optional, default Tx pin is GPIO_NUM_4
-  settings.mTxPin = GPIO_NUM_18; // Optional, default Rx pin is GPIO_NUM_5
-  const uint32_t errorCode = ACAN_ESP32::can.begin(settings);
-  if (errorCode == 0)
-  {
-    Serial.print("Bit Rate prescaler: ");
-    Serial.println(settings.mBitRatePrescaler);
-    Serial.print("Time Segment 1:     ");
-    Serial.println(settings.mTimeSegment1);
-    Serial.print("Time Segment 2:     ");
-    Serial.println(settings.mTimeSegment2);
-    Serial.print("RJW:                ");
-    Serial.println(settings.mRJW);
-    Serial.print("Triple Sampling:    ");
-    Serial.println(settings.mTripleSampling ? "yes" : "no");
-    Serial.print("Actual bit rate:    ");
-    Serial.print(settings.actualBitRate());
-    Serial.println(" bit/s");
-    Serial.print("Exact bit rate ?    ");
-    Serial.println(settings.exactBitRate() ? "yes" : "no");
-    Serial.print("Distance            ");
-    Serial.print(settings.ppmFromDesiredBitRate());
-    Serial.println(" ppm");
-    Serial.print("Sample point:       ");
-    Serial.print(settings.samplePointFromBitStart());
-    Serial.println("%");
-    Serial.println("Configuration OK!");
-  }
-  else
-  {
-    Serial.print("Configuration error 0x");
-    Serial.println(errorCode, HEX);
-  }
+    Wire.setSDA(38);
+  Wire.setSCL(37);
+  Wire.onReceive(onReceive);
+  Wire.onRequest(onRequest);
+  Wire.begin((uint8_t)I2C_DEV_ADDR);
 
+#if CONFIG_IDF_TARGET_ESP32
+  char message[64];
+  snprintf(message, 64, "%u Packets.", i++);
+  Wire.slaveWrite((uint8_t *)message, strlen(message));
+#endif
   pinMode(20, OUTPUT);
   digitalWrite(20, LOW);
   pinMode(19, OUTPUT);
@@ -162,7 +133,7 @@ void setup()
   pinMode(35, OUTPUT);
   digitalWrite(35, LOW);
   pinMode(drs, INPUT_PULLUP);
-  // digitalWrite(38, LOW);
+  // digitalWrite(18, LOW);
   pinMode(0, OUTPUT); // TOUCH-CS
 
   // Init Display
@@ -204,20 +175,9 @@ void setup()
   delay(3000);
 }
 
-static uint32_t gBlinkLedDate = 0;
-static uint32_t gReceivedFrameCount = 0;
-static uint32_t gSentFrameCount = 0;
-
 void loop()
 {
   drsVal = digitalRead(drs);
-  CANMessage frame;
-   while (ACAN_ESP32::can.receive(frame))
-  {
-        Serial.print("Receive: ");
-    Serial.print(gReceivedFrameCount);
-    gReceivedFrameCount += 1;
-  }
 
   lv_timer_handler();
   lv_spinbox_set_value(ui_Spinbox2, spVal);

@@ -29,6 +29,7 @@
  —————————————————————————————————————————————————————————————————————————————— */
 
 #include "DFRobot_MCP2515.h"
+#include <Wire.h>
 
 #define upSW 15
 #define downSW 14
@@ -46,7 +47,10 @@ String BuildMessage = "";
 void setup()
 {
     Serial.begin(115200);
-    delay(100);
+    delay(1000);
+    Wire.setSDA(2);
+    Wire.setSCL(3);
+    Wire.begin();
     pinMode(upSW, INPUT_PULLUP);
     pinMode(downSW, INPUT_PULLUP);
     while (CAN.begin(CAN_500KBPS))
@@ -86,6 +90,7 @@ void MCP2515_ISR()
 }
 #define INT32U unsigned long int
 INT32U canId = 0x000;
+static char buff[100];
 unsigned char up[8] = {0, 1, 1, 0, 0, 0, 0, 0};
 unsigned char down[8] = {0, 1, 2, 0, 0, 0, 0, 0};
 unsigned char pidchk[8] = {2, 1, 0, 0, 0, 0, 0, 0};
@@ -143,6 +148,15 @@ void loop()
     else if (Order == 0)
     {
     }
+    static int p;
+    char b[90];
+    Wire.beginTransmission(0x55);
+    Wire.write(b, strlen(b));
+    Wire.endTransmission();
+
+    // Ensure the slave processing is done and print it out
+    delay(1000);
+    Serial.printf("buff: '%s'\r\n", buff);
     if (flagRecv)
     { // check if get data
 
@@ -196,4 +210,5 @@ void loop()
             delay(100);
         }
     }
+    delay(100);
 }

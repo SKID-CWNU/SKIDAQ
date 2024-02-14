@@ -385,7 +385,7 @@ void loop()
     byte timing_Advance_Msg[8] = {3, 65, 0x0E, (byte)((timing_Advance + 64) * 2)};
     byte intake_Temp_Msg[8] = {3, 65, 0x0F, (byte)(intake_Temp + 40)};
     byte maf_Air_Flow_Rate_Msg[8] = {4, 65, 0x10, (byte)maf_A, (byte)maf_B};
-
+    byte Normal_DAQ[8] = {2, 0, OBTemp, (byte)acelx, (byte)acely};
     // Serial return message
     String reply;
     // CAN Area
@@ -606,6 +606,8 @@ void loop()
             canMessageRead = "";
         }
     }
+    CAN.sendMsgBuf(2, 0, 8, Normal_DAQ);
+    Serial.println("Reply: " + String((char *Normal_DAQ)));
     delay(100);
 }
 
