@@ -13,8 +13,6 @@
 
  * Pin Summary
 
-    GP6  - DIAG Mode Interrupt
-    GP10 - DHT Temp/Humid Sensor
     GP12 - MOSFET Upshift
     GP13 - MOSFET Downshift
     GP16 - CAN RX Pin - to SO (MISO)
@@ -22,48 +20,121 @@
     GP18 - CAN SCK Pin
     GP19 - CAN TX Pin - to SI (MOSI)
     GP20 - CAN Interrupt Pin
-    ADC0 - CKP(RPM) Pulse Monitor
 
     Ref: https://www.raspberrypi.com/documentation/microcontrollers/images/pico-pinout.svg
 
  —————————————————————————————————————————————————————————————————————————————— */
 
 #include "DFRobot_MCP2515.h"
-#include <Wire.h>
+#include "driver/twai.h"
 
 #define upSW 15
 #define downSW 14
 int shiftval = 0;
 
-const int SPI_CS_PIN = 17;
-DFRobot_MCP2515 CAN(SPI_CS_PIN); // Set CS pin
+#define RX_PIN 21
+#define TX_PIN 22
+// Intervall:
+#define POLLING_RATE_MS 100
+#define TRANSMIT_RATE_MS 100
 
-unsigned char flagRecv = 0;
-unsigned char len = 0;
-unsigned char buf[8];
-char str[20];
-String BuildMessage = "";
+static bool driver_installed = false;
+unsigned long previousMillis = 0; // will store last time a message was send
 
 void setup()
 {
     Serial.begin(115200);
     delay(1000);
-    Wire.setSDA(2);
-    Wire.setSCL(3);
-    Wire.begin();
     pinMode(upSW, INPUT_PULLUP);
     pinMode(downSW, INPUT_PULLUP);
-    while (CAN.begin(CAN_500KBPS))
-    { // init can bus : baudrate = 500k
-        Serial.println("DFROBOT's CAN BUS Shield init fail");
-        Serial.println("Please Init CAN BUS Shield again");
-        delay(3000);
+    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT((gpio_num_t)TX_PIN, (gpio_num_t)RX_PIN, TWAI_MODE_NORMAL);
+    twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS(); // Look in the api-reference for other speed sets.
+    twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+    // Install TWAI driver
+    if (twai_driver_install(&g_config, &t_config, &f_config) == ESP_OK)
+    {
+        Serial.println("Driver installed");
     }
-    Serial.println("DFROBOT's CAN BUS Shield init ok!\n");
+    else
+    {
+        Serial.println("Failed to install driver");
+        return;
+    }
 
-    attachInterrupt(20, MCP2515_ISR, FALLING); // start interrupt
+    // Start TWAI driver
+    if (twai_start() == ESP_OK)
+    {
+        Serial.println("Driver started");
+    }
+    else
+    {
+        Serial.println("Failed to start driver");
+        return;
+    }
+
+    // Reconfigure alerts to detect frame receive, Bus-Off error and RX queue full states
+    uint32_t alerts_to_enable = TWAI_ALERT_RX_DATA | TWAI_ALERT_ERR_PASS | TWAI_ALERT_BUS_ERROR | TWAI_ALERT_RX_QUEUE_FULL;
+    if (twai_reconfigure_alerts(alerts_to_enable, NULL) == ESP_OK)
+    {
+        Serial.println("CAN Alerts reconfigured");
+    }
+    else
+    {
+        Serial.println("Failed to reconfigure alerts");
+        return;
+    }
+
+    // TWAI driver is now successfully installed and started
+    driver_installed = true;
     delay(1000);
 }
+
+static void send_message()
+{
+    // Send message
+
+    // Configure message to transmit
+    twai_message_t message;
+    message.identifier = 0x0F6;
+    message.data_length_code = 4;
+    for (int i = 0; i < 4; i++)
+    {
+        message.data[i] = 0;
+    }
+
+    // Queue message for transmission
+    if (twai_transmit(&message, pdMS_TO_TICKS(1000)) == ESP_OK)
+    {
+        printf("Message queued for transmission\n");
+    }
+    else
+    {
+        printf("Failed to queue message for transmission\n");
+    }
+}
+
+static void handle_rx_message(twai_message_t &message)
+{
+    // Process received message
+    if (message.extd)
+    {
+        Serial.println("Message is in Extended Format");
+    }
+    else
+    {
+        Serial.println("Message is in Standard Format");
+    }
+    Serial.printf("ID: %x\nByte:", message.identifier);
+    if (!(message.rtr))
+    {
+        for (int i = 0; i < message.data_length_code; i++)
+        {
+            Serial.printf(" %d = %02x,", i, message.data[i]);
+        }
+        Serial.println("");
+    }
+}
+
 void shiftMode()
 {
     int upval = digitalRead(upSW);
@@ -84,12 +155,6 @@ void shiftMode()
     }
 }
 
-void MCP2515_ISR()
-{
-    flagRecv = 1;
-}
-#define INT32U unsigned long int
-INT32U canId = 0x000;
 static char buff[100];
 unsigned char up[8] = {0, 1, 1, 0, 0, 0, 0, 0};
 unsigned char down[8] = {0, 1, 2, 0, 0, 0, 0, 0};
@@ -98,17 +163,30 @@ unsigned char milClr[8] = {2, 1, 1, 0, 0, 0, 0, 0};
 unsigned char coolTemp[8] = {2, 1, 5, 0, 0, 0, 0, 0};
 unsigned char rpmm[8] = {2, 1, 12, 0, 0, 0, 0, 0};
 unsigned char ambtemp[8] = {2, 1, 70, 0, 0, 0, 0, 0};
+
 void loop()
 {
+    if (!driver_installed)
+    {
+        // Driver not installed
+        delay(1000);
+        return;
+    }
+    // Check if alert happened
+    uint32_t alerts_triggered;
+    twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(POLLING_RATE_MS));
+    twai_status_info_t twaistatus;
+    twai_get_status_info(&twaistatus);
+
     shiftMode();
     switch (shiftval)
     {
     case 1:
-        CAN.sendMsgBuf(0x00, 0, 8, up);
+
         delay(400);
         break;
     case 2:
-        CAN.sendMsgBuf(0x00, 0, 8, down);
+
         delay(400);
         break;
 
@@ -118,97 +196,120 @@ void loop()
         break;
     }
     shiftval = 0;
+    // Handle alerts
+    if (alerts_triggered & TWAI_ALERT_ERR_PASS)
+    {
+        Serial.println("Alert: TWAI controller has become error passive.");
+    }
+    if (alerts_triggered & TWAI_ALERT_BUS_ERROR)
+    {
+        Serial.println("Alert: A (Bit, Stuff, CRC, Form, ACK) error has occurred on the bus.");
+        Serial.printf("Bus error count: %d\n", twaistatus.bus_error_count);
+    }
+    if (alerts_triggered & TWAI_ALERT_TX_FAILED)
+    {
+        Serial.println("Alert: The Transmission failed.");
+        Serial.printf("TX buffered: %d\t", twaistatus.msgs_to_tx);
+        Serial.printf("TX error: %d\t", twaistatus.tx_error_counter);
+        Serial.printf("TX failed: %d\n", twaistatus.tx_failed_count);
+    }
+    if (alerts_triggered & TWAI_ALERT_TX_SUCCESS)
+    {
+        Serial.println("Alert: The Transmission was successful.");
+        Serial.printf("TX buffered: %d\t", twaistatus.msgs_to_tx);
+    }
 
-    char Order = Serial.read();
-    if (Order == '1')
+    // Send message
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= TRANSMIT_RATE_MS)
     {
-        CAN.sendMsgBuf(0x02, 0, 8, pidchk);
-        Order = 0;
+        previousMillis = currentMillis;
+        send_message();
     }
-    else if (Order == '2')
-    {
-        CAN.sendMsgBuf(0x02, 0, 8, milClr);
-        Order = 0;
-    }
-    else if (Order == '3')
-    {
-        CAN.sendMsgBuf(0x02, 0, 8, coolTemp);
-        Order = 0;
-    }
-    else if (Order == '4')
-    {
-        CAN.sendMsgBuf(0x02, 0, 8, rpmm);
-        Order = 0;
-    }
-    else if (Order == '5')
-    {
-        CAN.sendMsgBuf(0x02, 0, 8, ambtemp);
-        Order = 0;
-    }
-    else if (Order == 0)
-    {
-    }
-    static int p;
-    char b[90];
-    Wire.beginTransmission(0x55);
-    Wire.write(b, strlen(b));
-    Wire.endTransmission();
+    // char Order = Serial.read();
+    // if (Order == '1')
+    // {
+    //     CAN.sendMsgBuf(0x02, 0, 8, pidchk);
+    //     Order = 0;
+    // }
+    // else if (Order == '2')
+    // {
+    //     CAN.sendMsgBuf(0x02, 0, 8, milClr);
+    //     Order = 0;
+    // }
+    // else if (Order == '3')
+    // {
+    //     CAN.sendMsgBuf(0x02, 0, 8, coolTemp);
+    //     Order = 0;
+    // }
+    // else if (Order == '4')
+    // {
+    //     CAN.sendMsgBuf(0x02, 0, 8, rpmm);
+    //     Order = 0;
+    // }
+    // else if (Order == '5')
+    // {
+    //     CAN.sendMsgBuf(0x02, 0, 8, ambtemp);
+    //     Order = 0;
+    // }
+    // else if (Order == 0)
+    // {
+    // }
+    // static int p;
+    // char b[90];
 
-    // Ensure the slave processing is done and print it out
-    delay(1000);
-    Serial.printf("buff: '%s'\r\n", buff);
-    if (flagRecv)
-    { // check if get data
+    // if (flagRecv)
+    // { // check if get data
 
-        flagRecv = 0; // clear flag
+    //     flagRecv = 0; // clear flag
 
-        // iterate over all pending messages
-        // If either the bus is saturated or the MCU is busy,
-        // both RX buffers may be in use and after having read a single
-        // message, MCU does  clear the corresponding IRQ conditon.
-        while (CAN_MSGAVAIL == CAN.checkReceive())
-        {
-            // read data,  len: data length, buf: data buf
-            CAN.readMsgBuf(&len, buf);
-            canId = CAN.getCanId();
-            if (canId == 0x7E8)
-            {
-                if (buf[0] == 4 && buf[1] == 65)
-                {
-                    switch (buf[2])
-                    {
-                    case 70:
-                        Serial.print("Ambient Temperature: ");
-                        Serial.println(buf[3]);
-                        break;
-                    case 63:
-                        Serial.println("Status Cleared.");
-                        break;
-                    case 5:
-                        Serial.print("Coolant Temperature: ");
-                        Serial.println(buf[3], OCT);
-                        break;
-                    case 12:
-                        Serial.print("TachoMeter: ");
-                        Serial.println(buf[3], OCT);
-                        break;
+    //     // iterate over all pending messages
+    //     // If either the bus is saturated or the MCU is busy,
+    //     // both RX buffers may be in use and after having read a single
+    //     // message, MCU does  clear the corresponding IRQ conditon.
+    //     while (CAN_MSGAVAIL == CAN.checkReceive())
+    //     {
+    //         // read data,  len: data length, buf: data buf
+    //         CAN.readMsgBuf(&len, buf);
+    //         canId = CAN.getCanId();
+    //         if (canId == 0x7E8)
+    //         {
+    //             if (buf[0] == 4 && buf[1] == 65)
+    //             {
+    //                 switch (buf[2])
+    //                 {
+    //                 case 70:
+    //                     Serial.print("Ambient Temperature: ");
+    //                     Serial.println(buf[3]);
+    //                     break;
+    //                 case 63:
+    //                     Serial.println("Status Cleared.");
+    //                     break;
+    //                 case 5:
+    //                     Serial.print("Coolant Temperature: ");
+    //                     Serial.println(buf[3], OCT);
+    //                     break;
+    //                 case 12:
+    //                     Serial.print("TachoMeter: ");
+    //                     Serial.println(buf[3], OCT);
+    //                     break;
 
-                    default:
-                        break;
-                    }
-                }
-            }
-            else if (canId)
-                // print the data
-                for (int i = 0; i < len; i++)
-                {
-                    BuildMessage = BuildMessage + buf[i] + ",";
-                }
-            Serial.println(BuildMessage);
-            BuildMessage = "";
-            Serial.println(" ");
-            delay(100);
-        }
-    }
+    //                 default:
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //         else if (canId)
+    //             // print the data
+    //             for (int i = 0; i < len; i++)
+    //             {
+    //                 BuildMessage = BuildMessage + buf[i] + ",";
+    //             }
+    //         Serial.println(BuildMessage);
+    //         BuildMessage = "";
+    //         Serial.println(" ");
+    //         delay(100);
+    //     }
+    // }
     delay(100);
 }
