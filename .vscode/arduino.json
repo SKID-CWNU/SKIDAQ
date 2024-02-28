@@ -1,9 +1,9 @@
 {
-    "sketch": "code\\Testing_Crate\\backup\\backup.ino",
-    "board": "esp32:esp32:nodemcu-32s",
-    "port": "COM6",
+    "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main.ino",
+    "board": "rp2040:rp2040:rpipico",
+    "port": "COM12",
     "output": "../build",
     "intelliSenseGen": "global",
     "programmer": "esptool",
-    "configuration": "FlashFreq=80,UploadSpeed=921600,DebugLevel=info,EraseFlash=none"
+    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Enabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
 }

@@ -25,6 +25,7 @@
         GP10 - DHT Temp/Humid Sensor
         GP12 - MOSFET Upshift
         GP13 - MOSFET Downshift
+        GP14 - MOSFET DRS Actuation
         GP16 - CAN RX Pin - to SO (MISO)
         GP17 - CAN CS Pin
         GP18 - CAN SCK Pin
@@ -68,6 +69,7 @@ unsigned char len = 0;
 // This the eight byte buffer of the incoming message data payload
 unsigned char buf[8];
 String canMessageRead = "";
+String reply = "";
 // MIL on and DTC Present
 bool MIL = true;
 char str[20];
@@ -88,126 +90,25 @@ int fuel_Type = 4;
 // ——————————————————————————————————————————————————————————————————————————————
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 
-void displaySensorDetails(void)
-{
-    sensor_t sensor;
-    accel.getSensor(&sensor);
-    Serial.println("------------------------------------");
-    Serial.print("Sensor:       ");
-    Serial.println(sensor.name);
-    Serial.print("Driver Ver:   ");
-    Serial.println(sensor.version);
-    Serial.print("Unique ID:    ");
-    Serial.println(sensor.sensor_id);
-    Serial.print("Max Value:    ");
-    Serial.print(sensor.max_value);
-    Serial.println(" m/s^2");
-    Serial.print("Min Value:    ");
-    Serial.print(sensor.min_value);
-    Serial.println(" m/s^2");
-    Serial.print("Resolution:   ");
-    Serial.print(sensor.resolution);
-    Serial.println(" m/s^2");
-    Serial.println("------------------------------------");
-    Serial.println("");
-    delay(500);
-}
-
-void displayDataRate(void)
-{
-    Serial.print("Data Rate:    ");
-
-    switch (accel.getDataRate())
-    {
-    case ADXL345_DATARATE_3200_HZ:
-        Serial.print("3200 ");
-        break;
-    case ADXL345_DATARATE_1600_HZ:
-        Serial.print("1600 ");
-        break;
-    case ADXL345_DATARATE_800_HZ:
-        Serial.print("800 ");
-        break;
-    case ADXL345_DATARATE_400_HZ:
-        Serial.print("400 ");
-        break;
-    case ADXL345_DATARATE_200_HZ:
-        Serial.print("200 ");
-        break;
-    case ADXL345_DATARATE_100_HZ:
-        Serial.print("100 ");
-        break;
-    case ADXL345_DATARATE_50_HZ:
-        Serial.print("50 ");
-        break;
-    case ADXL345_DATARATE_25_HZ:
-        Serial.print("25 ");
-        break;
-    case ADXL345_DATARATE_12_5_HZ:
-        Serial.print("12.5 ");
-        break;
-    case ADXL345_DATARATE_6_25HZ:
-        Serial.print("6.25 ");
-        break;
-    case ADXL345_DATARATE_3_13_HZ:
-        Serial.print("3.13 ");
-        break;
-    case ADXL345_DATARATE_1_56_HZ:
-        Serial.print("1.56 ");
-        break;
-    case ADXL345_DATARATE_0_78_HZ:
-        Serial.print("0.78 ");
-        break;
-    case ADXL345_DATARATE_0_39_HZ:
-        Serial.print("0.39 ");
-        break;
-    case ADXL345_DATARATE_0_20_HZ:
-        Serial.print("0.20 ");
-        break;
-    case ADXL345_DATARATE_0_10_HZ:
-        Serial.print("0.10 ");
-        break;
-    default:
-        Serial.print("???? ");
-        break;
-    }
-    Serial.println(" Hz");
-}
-
-void displayRange(void)
-{
-    Serial.print("Range:         +/- ");
-
-    switch (accel.getRange())
-    {
-    case ADXL345_RANGE_16_G:
-        Serial.print("16 ");
-        break;
-    case ADXL345_RANGE_8_G:
-        Serial.print("8 ");
-        break;
-    case ADXL345_RANGE_4_G:
-        Serial.print("4 ");
-        break;
-    case ADXL345_RANGE_2_G:
-        Serial.print("2 ");
-        break;
-    default:
-        Serial.print("?? ");
-        break;
-    }
-    Serial.println(" g");
-}
-
+// ——————————————————————————————————————————————————————————————————————————————
+//   Private Functions Initalization
+// ——————————————————————————————————————————————————————————————————————————————
+static void DHT_TaskInit(void);
+static void DHT_TaskMng(void);
+static void ADXL345_Init(void);
+static void ADXL345_displaySensorDetails(void);
+static void ADXL345_displayDataRate(void);
+static void ADXL345_displayRange(void);
+static void MCP2515_Init(void);
+void blink(int deltime);
 // ——————————————————————————————————————————————————————————————————————————————
 //    Other Comp. Initalization
 // ——————————————————————————————————————————————————————————————————————————————
 int picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
 int obled = LED_BUILTIN;         // On-Board LED for Basic Error Indication
-ADCInput RPulse(A0);             // For stereo/dual mikes, could use this line instead
-// ADCInput(A0, A1);
-#define DiagEN 7 // Toggle Switch for OBD2 Simulation
-int DIAGENB = 0; //
+ADCInput RPulse(A0);             // For stereo/dual input, could use this line instead -> ADCInput(A0, A1);
+#define DiagEN 7                 // Toggle Switch for OBD2 Simulation
+int DIAGENB = 0;                 //
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    MOSFET Switch Module Configuration
@@ -215,14 +116,7 @@ int DIAGENB = 0; //
 #define DynoInt 9
 #define MOSUP_PIN 12
 #define MOSDOWN_PIN 13
-
-void blink(int deltime)
-{
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(deltime);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(deltime);
-}
+#define DRS_PIN 14
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main Program Setup
@@ -233,44 +127,23 @@ void setup()
     pinMode(obled, OUTPUT);
     pinMode(MOSUP_PIN, OUTPUT);
     pinMode(MOSDOWN_PIN, OUTPUT);
+    pinMode(DRS_PIN, OUTPUT);
     pinMode(DynoInt, OUTPUT);
     pinMode(DiagEN, INPUT);
     Serial.begin(115200);
     delay(100);
-    dht.begin();        // DHT Sensor Begin
+    DHT_TaskInit();
     RPulse.begin(8000); // CPS Pulse A/D Converter Begin
-    if (!accel.begin())
-    {
-        /* There was a problem detecting the ADXL345 ... check your connections */
-        Serial.println("Ooops, no ADXL345 detected ... Check your wiring!");
-        while (1)
-            ;
-    }
-    // accel.setRange(ADXL345_RANGE_16_G);
-    //  accel.setRange(ADXL345_RANGE_8_G);
-    //  accel.setRange(ADXL345_RANGE_4_G);
-    accel.setRange(ADXL345_RANGE_2_G);
+
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
-    Serial.println("*                      SKIDAQ           " + String(FW_Version) + "                            *");
-    Serial.println("*                By Rick Spooner https://github.com/WonITKorea               *");
+    Serial.println("*                    SKIDAQ           " + String(FW_Version) + "                          *");
+    Serial.println("*                By ChaeWon Lim https://github.com/WonITKorea               *");
     Serial.println("*                       Based on Open-Ecu-Sim-OBD2-FW                        *");
     Serial.println("*                By Rick Spooner https://github.com/spoonieau                *");
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
     blink(1000);
-    Serial.println("-----ADXL345 STATUS-----");
-    /* Display some basic information on this sensor */
-    displaySensorDetails();
-    /* Display additional settings (outside the scope of sensor_t) */
-    displayDataRate();
-    displayRange();
-    Serial.println("");
-    while (CAN.begin(CAN_500KBPS))
-    { // init can bus : baudrate = 500k
-        Serial.println("CAN BUS Shield init fail");
-        Serial.println("Please Init CAN BUS Shield again");
-        blink(500);
-        blink(500);
-    }
+    ADXL345_Init();
+    MCP2515_Init();
     delay(3000);
 }
 
@@ -386,10 +259,11 @@ void loop()
     byte intake_Temp_Msg[8] = {3, 65, 0x0F, (byte)(intake_Temp + 40)};
     byte maf_Air_Flow_Rate_Msg[8] = {4, 65, 0x10, (byte)maf_A, (byte)maf_B};
     byte Normal_DAQ[8] = {2, 0, OBTemp, (byte)acelx, (byte)acely};
-    // Serial return message
-    String reply;
-    // CAN Area
 
+    // CAN Area
+    CAN.sendMsgBuf(2, 0, 8, Normal_DAQ);
+    Serial.println("Normal Data Tx: " + String((char *)Normal_DAQ));
+    delay(150);
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
         {
@@ -424,6 +298,16 @@ void loop()
                 delay(200);
                 digitalWrite(DynoInt, LOW);
                 digitalWrite(MOSDOWN_PIN, LOW);
+                delay(100);
+            }
+            if (canMessageRead == "0,2,1,")
+            {
+                digitalWrite(DRS_PIN, HIGH);
+                delay(50);
+            }
+            if (canMessageRead == "0,2,2,")
+            {
+                digitalWrite(DRS_PIN, LOW);
                 delay(100);
             }
             //=================================================================
@@ -606,14 +490,214 @@ void loop()
             canMessageRead = "";
         }
     }
-    CAN.sendMsgBuf(2, 0, 8, Normal_DAQ);
-    Serial.println("Reply: " + String((char *Normal_DAQ)));
+
     delay(100);
 }
 
 // ——————————————————————————————————————————————————————————————————————————————
 //   OBD-II PIDs Configuration - https://en.wikipedia.org/wiki/OBD-II_PIDs
 // ——————————————————————————————————————————————————————————————————————————————
+
+static void DHT_TaskInit(void)
+{
+    dht.begin();
+    dht_refresh_timestamp = millis();
+}
+
+static void DHT_TaskMng(void)
+{
+    uint32_t now = millis();
+    float temperature = 0.0;
+    float humidity = 0.0;
+    if ((now - dht_refresh_timestamp) >= DHT_REFRESH_TIME)
+    {
+        dht_refresh_timestamp = now;
+        // Reading temperature or humidity takes about 250 milliseconds!
+        // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+        humidity = dht.readHumidity();
+        // Read temperature as Celsius (the default)
+        temperature = dht.readTemperature();
+
+        // Check if any reads failed and exit early (to try again).
+        if (isnan(humidity) || isnan(temperature))
+        {
+            Serial.println(F("Error: Check DHT Module"));
+        }
+        else
+        {
+            if (sensor_data.sensor_idx < SENSOR_BUFF_SIZE)
+            {
+                sensor_data.temperature[sensor_data.sensor_idx] = (uint8_t)(temperature);
+                sensor_data.humidity[sensor_data.sensor_idx] = (uint8_t)(humidity);
+                sensor_data.sensor_idx++;
+                // Reset to Zero
+                if (sensor_data.sensor_idx >= SENSOR_BUFF_SIZE)
+                {
+                    sensor_data.sensor_idx = 0u;
+                }
+            }
+        }
+    }
+}
+
+static void ADXL345_Init(void)
+{
+    while (!accel.begin())
+    {
+        /* There was a problem detecting the ADXL345 ... check your connections */
+        blink(100);
+        Serial.println("Error: Check ADXL345 Wiring.");
+        Serial.println("Retrying in 3 Seconds.");
+        blink(500);
+        blink(500);
+        blink(500);
+    }
+    Serial.println("ADXL345 Status: OK");
+    // /* Display some basic information on this sensor */
+    // displaySensorDetails();
+    // /* Display additional settings (outside the scope of sensor_t) */
+    // displayDataRate();
+    // displayRange();
+    Serial.println("");
+    // accel.setRange(ADXL345_RANGE_16_G);
+    //  accel.setRange(ADXL345_RANGE_8_G);
+    //  accel.setRange(ADXL345_RANGE_4_G);
+    accel.setRange(ADXL345_RANGE_2_G);
+}
+
+static void ADXL345_displayDataRate(void)
+{
+    Serial.print("Data Rate:    ");
+
+    switch (accel.getDataRate())
+    {
+    case ADXL345_DATARATE_3200_HZ:
+        Serial.print("3200 ");
+        break;
+    case ADXL345_DATARATE_1600_HZ:
+        Serial.print("1600 ");
+        break;
+    case ADXL345_DATARATE_800_HZ:
+        Serial.print("800 ");
+        break;
+    case ADXL345_DATARATE_400_HZ:
+        Serial.print("400 ");
+        break;
+    case ADXL345_DATARATE_200_HZ:
+        Serial.print("200 ");
+        break;
+    case ADXL345_DATARATE_100_HZ:
+        Serial.print("100 ");
+        break;
+    case ADXL345_DATARATE_50_HZ:
+        Serial.print("50 ");
+        break;
+    case ADXL345_DATARATE_25_HZ:
+        Serial.print("25 ");
+        break;
+    case ADXL345_DATARATE_12_5_HZ:
+        Serial.print("12.5 ");
+        break;
+    case ADXL345_DATARATE_6_25HZ:
+        Serial.print("6.25 ");
+        break;
+    case ADXL345_DATARATE_3_13_HZ:
+        Serial.print("3.13 ");
+        break;
+    case ADXL345_DATARATE_1_56_HZ:
+        Serial.print("1.56 ");
+        break;
+    case ADXL345_DATARATE_0_78_HZ:
+        Serial.print("0.78 ");
+        break;
+    case ADXL345_DATARATE_0_39_HZ:
+        Serial.print("0.39 ");
+        break;
+    case ADXL345_DATARATE_0_20_HZ:
+        Serial.print("0.20 ");
+        break;
+    case ADXL345_DATARATE_0_10_HZ:
+        Serial.print("0.10 ");
+        break;
+    default:
+        Serial.print("???? ");
+        break;
+    }
+    Serial.println(" Hz");
+}
+
+static void ADXL345_displayRange(void)
+{
+    Serial.print("Range:         +/- ");
+
+    switch (accel.getRange())
+    {
+    case ADXL345_RANGE_16_G:
+        Serial.print("16 ");
+        break;
+    case ADXL345_RANGE_8_G:
+        Serial.print("8 ");
+        break;
+    case ADXL345_RANGE_4_G:
+        Serial.print("4 ");
+        break;
+    case ADXL345_RANGE_2_G:
+        Serial.print("2 ");
+        break;
+    default:
+        Serial.print("?? ");
+        break;
+    }
+    Serial.println(" g");
+}
+
+static void ADXL345_displaySensorDetails(void)
+{
+    sensor_t sensor;
+    accel.getSensor(&sensor);
+    Serial.println("------------------------------------");
+    Serial.print("Sensor:       ");
+    Serial.println(sensor.name);
+    Serial.print("Driver Ver:   ");
+    Serial.println(sensor.version);
+    Serial.print("Unique ID:    ");
+    Serial.println(sensor.sensor_id);
+    Serial.print("Max Value:    ");
+    Serial.print(sensor.max_value);
+    Serial.println(" m/s^2");
+    Serial.print("Min Value:    ");
+    Serial.print(sensor.min_value);
+    Serial.println(" m/s^2");
+    Serial.print("Resolution:   ");
+    Serial.print(sensor.resolution);
+    Serial.println(" m/s^2");
+    Serial.println("------------------------------------");
+    Serial.println("");
+    delay(500);
+}
+
+static void MCP2515_Init(void)
+{
+    while (!CAN.begin(CAN_500KBPS))
+    { // init can bus : baudrate = 500k
+        blink(100);
+        blink(100);
+        Serial.println("Error: Check MCP2515 Module Wiring.");
+        Serial.println("Retrying in 3 Seconds.");
+        blink(500);
+        blink(500);
+        blink(500);
+    }
+    Serial.println("CAN Status: OK");
+}
+
+void blink(int deltime)
+{
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(deltime);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(deltime);
+}
 
 // Extra Configurations
 #ifndef ARDUINO_ARCH_RP2040
