@@ -270,6 +270,7 @@ void loop()
     CAN.sendMsgBuf(2, 0, 8, Normal_DAQ);
     Serial.println("Normal Data Tx: " + String((char *)Normal_DAQ));
     delay(150);
+    
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
         {
