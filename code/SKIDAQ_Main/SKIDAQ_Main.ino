@@ -37,10 +37,11 @@
 
 ——————————————————————————————————————————————————————————————————————————————*/
 
-#include <ADCInput.h>
+#include <Adafruit_ADS1X15.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
-#include "DHT.h"
+#include <DHT.h>
+#include <DHT_U.h>
 #include <SoftwareSerial.h>
 #include "DFRobot_MCP2515.h"
 #include <SPI.h>
@@ -51,7 +52,10 @@
 // ——————————————————————————————————————————————————————————————————————————————
 #define DHTPIN 10     // DHT Signal Pin
 #define DHTTYPE DHT22 // DHT Sensor type: DHT22
-DHT dht(DHTPIN, DHTTYPE);
+DHT_Unified dht(DHTPIN, DHTTYPE);
+uint32_t delayMS;
+float temperature = 0.0;
+float humidity = 0.0;
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    CAN Interface Configuration
@@ -91,24 +95,26 @@ int fuel_Type = 4;
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 
 // ——————————————————————————————————————————————————————————————————————————————
-//   Private Functions Initalization
+//  Functions Initalization
 // ——————————————————————————————————————————————————————————————————————————————
-static void DHT_TaskInit(void);
-static void DHT_TaskMng(void);
-static void ADXL345_Init(void);
-static void ADXL345_displaySensorDetails(void);
-static void ADXL345_displayDataRate(void);
-static void ADXL345_displayRange(void);
-static void MCP2515_Init(void);
+void DHT_TaskInit(void);
+void DHT_TaskMng(void);
+void ADS1115_Init(void);
+void ADS1115_Read(void);
+void ADXL345_Init(void);
+void ADXL345_displaySensorDetails(void);
+void ADXL345_displayDataRate(void);
+void ADXL345_displayRange(void);
+void MCP2515_Init(void);
 void blink(int deltime);
 // ——————————————————————————————————————————————————————————————————————————————
 //    Other Comp. Initalization
 // ——————————————————————————————————————————————————————————————————————————————
-int picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
-int obled = LED_BUILTIN;         // On-Board LED for Basic Error Indication
-ADCInput RPulse(A0);             // For stereo/dual input, could use this line instead -> ADCInput(A0, A1);
-#define DiagEN 7                 // Toggle Switch for OBD2 Simulation
-int DIAGENB = 0;                 //
+char picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
+int obled = LED_BUILTIN;          // On-Board LED for Basic Error Indication
+Adafruit_ADS1115 ads;             /* ADS1115 - 16-bit version */
+#define DiagEN 7                  // Toggle Switch for OBD2 Simulation
+int DIAGENB = 0;                  //
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    MOSFET Switch Module Configuration
@@ -133,8 +139,6 @@ void setup()
     Serial.begin(115200);
     delay(100);
     DHT_TaskInit();
-    RPulse.begin(8000); // CPS Pulse A/D Converter Begin
-
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
     Serial.println("*                    SKIDAQ           " + String(FW_Version) + "                          *");
     Serial.println("*                By ChaeWon Lim https://github.com/WonITKorea               *");
@@ -142,6 +146,7 @@ void setup()
     Serial.println("*                By Rick Spooner https://github.com/spoonieau                *");
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
     blink(1000);
+    ADS1115_Init();
     ADXL345_Init();
     MCP2515_Init();
     delay(3000);
@@ -220,7 +225,8 @@ byte mode9Supported0x00PID[8] = {0x06, 0x49, 0x00, 0x28, 0x28, 0x00, 0x00, 0x00}
 // ——————————————————————————————————————————————————————————————————————————————
 void loop()
 {
-
+    DHT_TaskMng();
+    ADS1115_Read();
     ////Build setting return msg
     byte obd_Std_Msg[8] = {4, 65, 0x1C, (byte)(obd_Std)};
     byte fuel_Type_Msg[8] = {4, 65, 0x51, (byte)(fuel_Type)};
@@ -236,9 +242,9 @@ void loop()
     int acelx = event.acceleration.x;
     int acely = event.acceleration.y;
     int acelz = event.acceleration.z;
-    int ControlAirTemp = dht.readTemperature();
+    int ControlAirTemp = temperature;
     int OBTemp = picoTemp;
-    int ControlHumidity = dht.readHumidity();
+    int ControlHumidity = humidity;
     int timing_Advance = 10;
 
     // Work out eng RPM
@@ -498,49 +504,78 @@ void loop()
 //   OBD-II PIDs Configuration - https://en.wikipedia.org/wiki/OBD-II_PIDs
 // ——————————————————————————————————————————————————————————————————————————————
 
-static void DHT_TaskInit(void)
+void DHT_TaskInit(void)
 {
     dht.begin();
-    dht_refresh_timestamp = millis();
+    sensor_t sensor;
+    delayMS = sensor.min_delay / 1000;
 }
 
-static void DHT_TaskMng(void)
+void DHT_TaskMng(void)
 {
-    uint32_t now = millis();
-    float temperature = 0.0;
-    float humidity = 0.0;
-    if ((now - dht_refresh_timestamp) >= DHT_REFRESH_TIME)
+    delay(delayMS);
+    // Get temperature event and print its value.
+    sensors_event_t event;
+    dht.temperature().getEvent(&event);
+    if (isnan(event.temperature))
     {
-        dht_refresh_timestamp = now;
-        // Reading temperature or humidity takes about 250 milliseconds!
-        // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-        humidity = dht.readHumidity();
-        // Read temperature as Celsius (the default)
-        temperature = dht.readTemperature();
-
-        // Check if any reads failed and exit early (to try again).
-        if (isnan(humidity) || isnan(temperature))
-        {
-            Serial.println(F("Error: Check DHT Module"));
-        }
-        else
-        {
-            if (sensor_data.sensor_idx < SENSOR_BUFF_SIZE)
-            {
-                sensor_data.temperature[sensor_data.sensor_idx] = (uint8_t)(temperature);
-                sensor_data.humidity[sensor_data.sensor_idx] = (uint8_t)(humidity);
-                sensor_data.sensor_idx++;
-                // Reset to Zero
-                if (sensor_data.sensor_idx >= SENSOR_BUFF_SIZE)
-                {
-                    sensor_data.sensor_idx = 0u;
-                }
-            }
-        }
+        Serial.println(F("Error reading temperature!"));
+    }
+    else
+    {
+        Serial.print(F("Temperature: "));
+        Serial.print(event.temperature);
+        Serial.println(F("°C"));
+        temperature = event.temperature;
+    }
+    // Get humidity event and print its value.
+    dht.humidity().getEvent(&event);
+    if (isnan(event.relative_humidity))
+    {
+        Serial.println(F("Error reading humidity!"));
+    }
+    else
+    {
+        Serial.print(F("Humidity: "));
+        Serial.print(event.relative_humidity);
+        Serial.println(F("%"));
+        humidity = event.relative_humidity;
     }
 }
 
-static void ADXL345_Init(void)
+void ADS1115_Init(void)
+{
+    // The ADC input range (or gain) can be changed via the following
+    // functions, but be careful never to exceed VDD +0.3V max, or to
+    // exceed the upper and lower limits if you adjust the input range!
+    // Setting these values incorrectly may destroy your ADC!
+    //                                                                ADS1015  ADS1115
+    //                                                                -------  -------
+    // ads.setGain(GAIN_TWOTHIRDS);  // 2/3x gain +/- 6.144V  1 bit = 3mV      0.1875mV (default)
+    // ads.setGain(GAIN_ONE);        // 1x gain   +/- 4.096V  1 bit = 2mV      0.125mV
+    // ads.setGain(GAIN_TWO);        // 2x gain   +/- 2.048V  1 bit = 1mV      0.0625mV
+    // ads.setGain(GAIN_FOUR);       // 4x gain   +/- 1.024V  1 bit = 0.5mV    0.03125mV
+    // ads.setGain(GAIN_EIGHT);      // 8x gain   +/- 0.512V  1 bit = 0.25mV   0.015625mV
+    // ads.setGain(GAIN_SIXTEEN);    // 16x gain  +/-
+    if (!ads.begin())
+    {
+        Serial.println("Error: Check ADS1115 Wiring");
+        while (1)
+            ;
+    }
+    // Setup 3V comparator on channel 0
+    ads.startComparator_SingleEnded(0, 1000);
+}
+
+void ADS1115_Read(void)
+{
+    int16_t adc0;
+
+    // Comparator will only de-assert after a read
+    adc0 = ads.getLastConversionResults();
+}
+
+void ADXL345_Init(void)
 {
     while (!accel.begin())
     {
@@ -565,7 +600,7 @@ static void ADXL345_Init(void)
     accel.setRange(ADXL345_RANGE_2_G);
 }
 
-static void ADXL345_displayDataRate(void)
+void ADXL345_displayDataRate(void)
 {
     Serial.print("Data Rate:    ");
 
@@ -626,7 +661,7 @@ static void ADXL345_displayDataRate(void)
     Serial.println(" Hz");
 }
 
-static void ADXL345_displayRange(void)
+void ADXL345_displayRange(void)
 {
     Serial.print("Range:         +/- ");
 
@@ -651,7 +686,7 @@ static void ADXL345_displayRange(void)
     Serial.println(" g");
 }
 
-static void ADXL345_displaySensorDetails(void)
+void ADXL345_displaySensorDetails(void)
 {
     sensor_t sensor;
     accel.getSensor(&sensor);
@@ -676,7 +711,7 @@ static void ADXL345_displaySensorDetails(void)
     delay(500);
 }
 
-static void MCP2515_Init(void)
+void MCP2515_Init(void)
 {
     while (!CAN.begin(CAN_500KBPS))
     { // init can bus : baudrate = 500k
