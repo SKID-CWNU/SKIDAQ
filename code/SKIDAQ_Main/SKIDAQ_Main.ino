@@ -117,7 +117,7 @@ Adafruit_ADS1115 ads;             /* ADS1115 - 16-bit version */
 int DIAGENB = 0;                  //
 
 // ——————————————————————————————————————————————————————————————————————————————
-//    MOSFET Switch Module Configuration
+//   Switch Module Configuration
 // ——————————————————————————————————————————————————————————————————————————————
 #define DynoInt 9
 #define MOSUP_PIN 12
@@ -270,7 +270,8 @@ void loop()
     CAN.sendMsgBuf(2, 0, 8, Normal_DAQ);
     Serial.println("Normal Data Tx: " + String((char *)Normal_DAQ));
     delay(150);
-    
+
+
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
         {
@@ -502,9 +503,8 @@ void loop()
 }
 
 // ——————————————————————————————————————————————————————————————————————————————
-//   OBD-II PIDs Configuration - https://en.wikipedia.org/wiki/OBD-II_PIDs
+//   Functions Configuration
 // ——————————————————————————————————————————————————————————————————————————————
-
 void DHT_TaskInit(void)
 {
     dht.begin();
