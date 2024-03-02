@@ -1,7 +1,7 @@
 /* ——————————————————————————————————————————————————————————————————————————————
     SKIDAQ Main Code
     Raspberry Pi Pico based SKID Datalogger Module
-    with Solenoid Valve Controlled QuickShift Interface
+    with Solenoid Valve Controlled Non-Clutch QuickShift Interface
     Copyright © 2024 by Lim ChaeWon
 
     This program is free software: you can redistribute it and/or modify
@@ -90,12 +90,12 @@ int obd_Std = 11;
 int fuel_Type = 4;
 
 // ——————————————————————————————————————————————————————————————————————————————
-//    ADXL345 Acceleration Sensor Configuration
+//    Adafruit Unified Sensor Configuration
 // ——————————————————————————————————————————————————————————————————————————————
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
-
+Adafruit_ADS1115 ads;             /* ADS1115 - 16-bit version */
 // ——————————————————————————————————————————————————————————————————————————————
-//  Functions Initalization
+//    Functions Initalization
 // ——————————————————————————————————————————————————————————————————————————————
 void DHT_TaskInit(void);
 void DHT_TaskMng(void);
@@ -112,17 +112,16 @@ void blink(int deltime);
 // ——————————————————————————————————————————————————————————————————————————————
 char picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
 int obled = LED_BUILTIN;          // On-Board LED for Basic Error Indication
-Adafruit_ADS1115 ads;             /* ADS1115 - 16-bit version */
-#define DiagEN 7                  // Toggle Switch for OBD2 Simulation
-int DIAGENB = 0;                  //
 
 // ——————————————————————————————————————————————————————————————————————————————
-//   Switch Module Configuration
+//    Switch Module Configuration
 // ——————————————————————————————————————————————————————————————————————————————
 #define DynoInt 9
 #define MOSUP_PIN 12
 #define MOSDOWN_PIN 13
 #define DRS_PIN 14
+#define DiagEN 7                  // Toggle Switch for OBD2 Simulation
+int DIAGENB = 0;                  //
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main Program Setup
@@ -139,6 +138,9 @@ void setup()
     Serial.begin(115200);
     delay(100);
     DHT_TaskInit();
+    ADS1115_Init();
+    ADXL345_Init();
+    MCP2515_Init();
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
     Serial.println("*                    SKIDAQ           " + String(FW_Version) + "                          *");
     Serial.println("*                By ChaeWon Lim https://github.com/WonITKorea               *");
@@ -146,9 +148,6 @@ void setup()
     Serial.println("*                By Rick Spooner https://github.com/spoonieau                *");
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
     blink(1000);
-    ADS1115_Init();
-    ADXL345_Init();
-    MCP2515_Init();
     delay(3000);
 }
 
@@ -227,23 +226,28 @@ void loop()
 {
     DHT_TaskMng();
     ADS1115_Read();
+    sensors_event_t event;
+    accel.getEvent(&event);
+
     ////Build setting return msg
     byte obd_Std_Msg[8] = {4, 65, 0x1C, (byte)(obd_Std)};
     byte fuel_Type_Msg[8] = {4, 65, 0x51, (byte)(fuel_Type)};
 
-    sensors_event_t event;
-    accel.getEvent(&event);
-
-    unsigned int engine_Coolant_Temperature = random(1, 200); // Set to random until measuring Actual value
+    // Set to random until measuring Actual value
+    unsigned int engine_Coolant_Temperature = random(1, 200);
     int rpm = random(1, 55);
     int vehicle_Speed = random(0, 255);
     unsigned int intake_Temp = random(0, 255);
     int maf_Air_Flow_Rate = random(0, 255);
+
+    // Work out ADXL345 Output to CAN
     int acelx = event.acceleration.x;
     int acely = event.acceleration.y;
     int acelz = event.acceleration.z;
-    int ControlAirTemp = temperature;
+
+    // Work out Air Condition Measurements
     int OBTemp = picoTemp;
+    int ControlAirTemp = temperature;
     int ControlHumidity = humidity;
     int timing_Advance = 10;
 
@@ -270,7 +274,6 @@ void loop()
     CAN.sendMsgBuf(2, 0, 8, Normal_DAQ);
     Serial.println("Normal Data Tx: " + String((char *)Normal_DAQ));
     delay(150);
-
 
     if (CAN_MSGAVAIL == CAN.checkReceive())
     {
