@@ -54,7 +54,7 @@
 #define DHTTYPE DHT22 // DHT Sensor type: DHT22
 DHT_Unified dht(DHTPIN, DHTTYPE);
 uint32_t delayMS;
-float temperature = 0.0;
+float temperature = 0.0; // defining global variable for using on CAN network
 float humidity = 0.0;
 
 // ——————————————————————————————————————————————————————————————————————————————
@@ -63,7 +63,7 @@ float humidity = 0.0;
 DFRobot_MCP2515 CAN(17); // Set CS to pin 17
 const int CAN_INT_PIN = 20;
 // Current Firmware Version
-char FW_Version[] = "Alpha";
+char FW_Version[] = "Beta Rev.1";
 // Incoming CAN-BUS message
 long unsigned int canId = 0x000;
 // This is the length of the incoming CAN-BUS message
