@@ -5,7 +5,7 @@ Preparation for Korean Formula SAE Student(KSAE) 2024
 
 - Based on Two Raspberry Pi Pico - with Arduino IDE / PlatformIO
 - 4.3 inch TFT LCD with ESP32 on-wheel
-- Data Acquisition Subsystem inspired by Monolith
+- DIY Data Acquisition Subsystem inspired from monolith by @luftaquila
 - DRS Control included
 - Hydraulic Valve Control via CAN Bus & Analog* Connection (*Safety Feature) 
 - IC Fuel-cut with DynoJet Powercommander V Quickshift trigger Detection
