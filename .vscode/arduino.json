@@ -1,5 +1,5 @@
 {
-    "sketch": "code\\Testing_Crate\\GPS_uBlox\\GPS_uBlox.ino",
+    "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main.ino",
     "board": "rp2040:rp2040:rpipico",
     "port": "COM18",
     "output": "../build",
