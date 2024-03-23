@@ -1,5 +1,5 @@
 {
-    "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main copy.ino",
+    "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main.ino",
     "board": "rp2040:rp2040:rpipico",
     "port": "COM18",
     "output": "../build",
