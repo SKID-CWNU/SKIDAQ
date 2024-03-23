@@ -21,5 +21,11 @@
     "editor.semanticHighlighting.enabled": false,
     "editor.smoothScrolling": true,
     "editor.stablePeek": true,
-    "diffEditor.experimental.showMoves": true
+    "diffEditor.experimental.showMoves": true,
+    "cmake.configureOnOpen": false,
+    "arduino.additionalUrls": [
+        "https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json"
+    ],
+    "arduino.enableUSBDetection": false,
+    "arduino.useArduinoCli": true
 }

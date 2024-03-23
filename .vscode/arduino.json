@@ -1,9 +1,9 @@
 {
-    "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main.ino",
+    "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main copy.ino",
     "board": "rp2040:rp2040:rpipico",
     "port": "COM18",
     "output": "../build",
     "intelliSenseGen": "global",
     "programmer": "esptool",
-    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Enabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
+    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Enabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=picotool"
 }
