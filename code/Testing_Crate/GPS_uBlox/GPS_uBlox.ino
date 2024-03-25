@@ -1,85 +1,93 @@
+#include <TinyGPSPlus.h>
+#include <SoftwareSerial.h>
 /*
-  Reading lat and long via UBX binary commands - no more NMEA parsing!
-  By: Nathan Seidle
-  SparkFun Electronics
-  Date: January 3rd, 2019
-  License: MIT. See license file for more information but you can
-  basically do whatever you want with this code.
-
-  This example shows how to query a Ublox module for its lat/long/altitude. We also
-  turn off the NMEA output on the I2C port. This decreases the amount of I2C traffic 
-  dramatically.
-
-  Note: Long/lat are large numbers because they are * 10^7. To convert lat/long
-  to something google maps understands simply divide the numbers by 10,000,000. We 
-  do this so that we don't have to use floating point numbers.
-
-  Leave NMEA parsing behind. Now you can simply ask the module for the datums you want!
-
-  Feel like supporting open source hardware?
-  Buy a board from SparkFun!
-  ZED-F9P RTK2: https://www.sparkfun.com/products/15136
-  NEO-M8P RTK: https://www.sparkfun.com/products/15005
-  SAM-M8Q: https://www.sparkfun.com/products/15106
-
-  Hardware Connections:
-  Plug a Qwiic cable into the GPS and a BlackBoard
-  If you don't have a platform with a Qwiic connection use the SparkFun Qwiic Breadboard Jumper (https://www.sparkfun.com/products/14425)
-  Open the serial monitor at 115200 baud to see the output
+   This sample sketch demonstrates the normal use of a TinyGPSPlus (TinyGPSPlus) object.
+   It requires the use of SoftwareSerial, and assumes that you have a
+   4800-baud serial GPS device hooked up on pins 4(rx) and 3(tx).
 */
+static const int RXPin = 4, TXPin = 3;
+static const uint32_t GPSBaud = 9600;
 
-#include <Wire.h> //Needed for I2C to GPS
+// The TinyGPSPlus object
+TinyGPSPlus gps;
 
-#include "SparkFun_Ublox_Arduino_Library.h" //http://librarymanager/All#SparkFun_u-blox_GNSS
-SFE_UBLOX_GPS myGPS;
-
-long lastTime = 0; //Simple local timer. Limits amount if I2C traffic to Ublox module.
+// The serial connection to the GPS device
+SoftwareSerial ss(3, 4);
 
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial); //Wait for user to open terminal
-  Serial.println("SparkFun Ublox Example");
-  Wire.setSDA(2);
-  Wire.setSCL(3);
-  Wire.begin();
+  ss.begin(GPSBaud);
+  delay(1000);
 
-  if (myGPS.begin() == false) //Connect to the Ublox module using Wire port
-  {
-    Serial.println(F("Ublox GPS not detected at default I2C address. Please check wiring. Freezing."));
-    while (1);
-  }
-
-  myGPS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
-  myGPS.saveConfiguration(); //Save the current settings to flash and BBR
+  Serial.println("DeviceExample.ino");
+  Serial.println("A simple demonstration of TinyGPSPlus with an attached GPS module");
+  Serial.print("Testing TinyGPSPlus library v. "); Serial.println(TinyGPSPlus::libraryVersion());
+  Serial.println("by Mikal Hart");
+  Serial.println();
 }
 
 void loop()
 {
-  //Query module only every second. Doing it more often will just cause I2C traffic.
-  //The module only responds when a new position is available
-  if (millis() - lastTime > 1000)
+  // This sketch displays information every time a new sentence is correctly encoded.
+  while (ss.available() > 0)
+    if (gps.encode(ss.read()))
+      displayInfo();
+
+  if (millis() > 5000 && gps.charsProcessed() < 10)
   {
-    lastTime = millis(); //Update the timer
-    
-    long latitude = myGPS.getLatitude();
-    Serial.print(F("Lat: "));
-    Serial.print(latitude);
-
-    long longitude = myGPS.getLongitude();
-    Serial.print(F(" Long: "));
-    Serial.print(longitude);
-    Serial.print(F(" (degrees * 10^-7)"));
-
-    long altitude = myGPS.getAltitude();
-    Serial.print(F(" Alt: "));
-    Serial.print(altitude);
-    Serial.print(F(" (mm)"));
-
-    byte SIV = myGPS.getSIV();
-    Serial.print(F(" SIV: "));
-    Serial.print(SIV);
-
-    Serial.println();
+    Serial.println(F("No GPS detected: check wiring."));
+    while(true);
   }
+}
+
+void displayInfo()
+{
+  Serial.print(F("Location: ")); 
+  if (gps.location.isValid())
+  {
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(F(","));
+    Serial.print(gps.location.lng(), 6);
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.print(F("  Date/Time: "));
+  if (gps.date.isValid())
+  {
+    Serial.print(gps.date.month());
+    Serial.print(F("/"));
+    Serial.print(gps.date.day());
+    Serial.print(F("/"));
+    Serial.print(gps.date.year());
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.print(F(" "));
+  if (gps.time.isValid())
+  {
+    if (gps.time.hour() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.hour());
+    Serial.print(F(":"));
+    if (gps.time.minute() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.minute());
+    Serial.print(F(":"));
+    if (gps.time.second() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.second());
+    Serial.print(F("."));
+    if (gps.time.centisecond() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.centisecond());
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.println();
 }
