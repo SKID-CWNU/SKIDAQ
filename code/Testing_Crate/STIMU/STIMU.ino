@@ -40,11 +40,11 @@
 // In order to test this sketch you need to plug a STEVAL-MKI193V1 in the DIL24 adapter of the X-NUCLEO-IKS01A3
 
 // Includes
-#include <ASM330LHHSensor.h>
+#include "ASM330LHHSensor.h"
 
 #define DEV_I2C Wire
 #define SerialPort Serial
-#define INT_1 A1
+#define INT_1 22
 
 // Components
 ASM330LHHSensor AccGyr(&DEV_I2C, ASM330LHH_I2C_ADD_L);
@@ -67,6 +67,7 @@ void setup() {
   DEV_I2C.begin();
 
   AccGyr.begin();
+  AccGyr.Set_X_FS(2);
   AccGyr.Enable_X();
   AccGyr.Enable_G();
 }
