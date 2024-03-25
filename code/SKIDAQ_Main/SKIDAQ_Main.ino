@@ -93,7 +93,7 @@ int fuel_Type = 4;
 //    Adafruit Unified Sensor Configuration
 // ——————————————————————————————————————————————————————————————————————————————
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
-Adafruit_ADS1115 ads;             /* ADS1115 - 16-bit version */
+Adafruit_ADS1115 ads; /* ADS1115 - 16-bit version */
 // ——————————————————————————————————————————————————————————————————————————————
 //    Functions Initalization
 // ——————————————————————————————————————————————————————————————————————————————
@@ -120,8 +120,8 @@ int obled = LED_BUILTIN;          // On-Board LED for Basic Error Indication
 #define MOSUP_PIN 12
 #define MOSDOWN_PIN 13
 #define DRS_PIN 14
-#define DiagEN 7                  // Toggle Switch for OBD2 Simulation
-int DIAGENB = 0;                  //
+#define DiagEN 7 // Toggle Switch for OBD2 Simulation
+int DIAGENB = 0; //
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    Main Program Setup
@@ -136,6 +136,11 @@ void setup()
     pinMode(DynoInt, OUTPUT);
     pinMode(DiagEN, INPUT);
     Serial.begin(115200);
+    while (!Serial)
+    {
+        ;
+    }
+
     delay(100);
     DHT_TaskInit();
     ADS1115_Init();
