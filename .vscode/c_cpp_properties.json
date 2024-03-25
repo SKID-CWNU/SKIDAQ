@@ -13,16 +13,13 @@
                 "-mthumb",
                 "-ffunction-sections",
                 "-fdata-sections",
-                "-fexceptions",
-                "-fstack-protector"
+                "-fexceptions"
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
                 "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.7.2\\include",
                 "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.7.2\\cores\\rp2040",
                 "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.7.2\\variants\\rpipico",
-                "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.7.2\\libraries\\Wire\\src",
-                "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.7.2\\libraries\\SPI\\src",
                 "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\arm-none-eabi\\include\\c++\\12.3.0",
                 "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\arm-none-eabi\\include\\c++\\12.3.0\\arm-none-eabi\\thumb",
                 "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\arm-none-eabi\\include\\c++\\12.3.0\\backward",
