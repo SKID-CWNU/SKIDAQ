@@ -5,5 +5,5 @@
     "output": "../build",
     "intelliSenseGen": "global",
     "programmer": "esptool",
-    "configuration": "flash=2097152_0,freq=133,opt=Small,rtti=Disabled,stackprotect=Disabled,exceptions=Enabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
+    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
 }

@@ -1,8 +1,8 @@
 #include <SoftwareSerial.h>
 
 // Choose two Arduino pins to use for software serial
-int RXPin = 5;
-int TXPin = 4;
+int RXPin = 14;
+int TXPin = 15;
 
 // Default baud of NEO-6M is 9600
 int GPSBaud = 9600;
@@ -14,9 +14,10 @@ void setup()
 {
     // Start the Arduino hardware serial port at 9600 baud
     Serial.begin(9600);
-
+    delay(1000);
     // Start the software serial port at the GPS's default baud
     gpsSerial.begin(GPSBaud);
+    delay(100);
 }
 
 void loop()
