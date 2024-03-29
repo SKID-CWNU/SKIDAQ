@@ -44,16 +44,19 @@
 
 #define DEV_I2C Wire
 #define SerialPort Serial
-#define INT_1 22
+#define INT_1 6
+float CAL = 0;
+char Acc2of = 0;
 
 // Components
 ASM330LHHSensor AccGyr(&DEV_I2C, ASM330LHH_I2C_ADD_L);
 
-void setup() {
+void setup()
+{
   // Led.
   pinMode(LED_BUILTIN, OUTPUT);
 
-  // Force INT1 of ASM330LHH low in order to enable I2C
+  // Force INT1 of ASM330LHFH low in order to enable I2C
   pinMode(INT_1, OUTPUT);
 
   digitalWrite(INT_1, LOW);
@@ -62,17 +65,18 @@ void setup() {
 
   // Initialize serial for output.
   SerialPort.begin(115200);
-  
+
   // Initialize I2C bus.
   DEV_I2C.begin();
 
   AccGyr.begin();
-  AccGyr.Set_X_FS(2);
+  AccGyr.Set_X_FS(4);
   AccGyr.Enable_X();
   AccGyr.Enable_G();
 }
 
-void loop() {
+void loop()
+{
   // Led blinking.
   digitalWrite(LED_BUILTIN, HIGH);
   delay(250);
@@ -84,14 +88,18 @@ void loop() {
   int32_t gyroscope[3] = {};
   AccGyr.Get_X_Axes(accelerometer);
   AccGyr.Get_G_Axes(gyroscope);
-
+  if (SerialPort.readString() == "l")
+  {
+    delay(3000);
+    Acc2of = - accelerometer[2];
+  }
   // Output data.
   SerialPort.print("ASM330LHH: | Acc[mg]: ");
   SerialPort.print(accelerometer[0]);
   SerialPort.print(" ");
   SerialPort.print(accelerometer[1]);
   SerialPort.print(" ");
-  SerialPort.print(accelerometer[2]);
+  SerialPort.print(accelerometer[2] - Acc2of);
   SerialPort.print(" | Gyr[mdps]: ");
   SerialPort.print(gyroscope[0]);
   SerialPort.print(" ");
