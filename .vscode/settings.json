@@ -11,9 +11,6 @@
         "string_view": "cpp",
         "initializer_list": "cpp"
     },
-    "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
-        "clang-diagnostic-error"
-    ],
     "github.codespaces.defaultExtensions": [
 
         "GitHub.codespaces",
@@ -33,9 +30,12 @@
     "arduino.additionalUrls": [
         "https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json",
         "https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json",
-        "https://github.com/espressif/arduino-esp32"
+        "https://github.com/espressif/arduino-esp32",
         "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
     ],
     "arduino.enableUSBDetection": false,
-    "arduino.useArduinoCli": true
+    "arduino.useArduinoCli": true,
+    "arduino.analyzeOnSettingChange": false,
+    "arduino.skipHeaderProvider": true,
+    "arduino.analyzeOnOpen": false
 }
