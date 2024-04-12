@@ -1,9 +1,5 @@
 {
-    "sketch": "code\\Testing_Crate\\GPSTest\\GPSTest.ino",
-    "board": "rp2040:rp2040:rpipico",
-    "port": "COM6",
-    "output": "../build",
-    "intelliSenseGen": "global",
-    "programmer": "esptool",
-    "configuration": "flash=2097152_0,freq=133,opt=Small,rtti=Disabled,stackprotect=Disabled,exceptions=Enabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
+    "board": "arduino:avr:uno",
+    "port": "COM18",
+    "sketch": "code\\Testing_Crate\\GPSTest\\GPSTest.ino"
 }
