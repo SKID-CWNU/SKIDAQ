@@ -45,6 +45,7 @@
 #include <SoftwareSerial.h>
 #include "DFRobot_MCP2515.h"
 #include <SPI.h>
+#include <TM1637.h>
 #include <Wire.h>
 
 // ——————————————————————————————————————————————————————————————————————————————
@@ -95,6 +96,16 @@ int fuel_Type = 4;
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 Adafruit_ADS1115 ads; /* ADS1115 - 16-bit version */
 // ——————————————————————————————————————————————————————————————————————————————
+//    Other Comp. Initalization
+// ——————————————————————————————————————————————————————————————————————————————
+char picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
+int obled = LED_BUILTIN;          // On-Board LED for Basic Error Indication
+// Instantiation and pins configurations
+// Pin 7 - > DIO
+// Pin 6 - > CLK
+TM1637 tm(6, 7);
+
+// ——————————————————————————————————————————————————————————————————————————————
 //    Functions Initalization
 // ——————————————————————————————————————————————————————————————————————————————
 void DHT_TaskInit(void);
@@ -106,12 +117,8 @@ void ADXL345_displaySensorDetails(void);
 void ADXL345_displayDataRate(void);
 void ADXL345_displayRange(void);
 void MCP2515_Init(void);
+void TM1637_Init(void);
 void blink(int deltime);
-// ——————————————————————————————————————————————————————————————————————————————
-//    Other Comp. Initalization
-// ——————————————————————————————————————————————————————————————————————————————
-char picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
-int obled = LED_BUILTIN;          // On-Board LED for Basic Error Indication
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    Switch Module Configuration
@@ -120,7 +127,6 @@ int obled = LED_BUILTIN;          // On-Board LED for Basic Error Indication
 #define MOSUP_PIN 12
 #define MOSDOWN_PIN 13
 #define DRS_PIN 14
-#define DiagEN 7 // Toggle Switch for OBD2 Simulation
 int DIAGENB = 0; //
 
 // ——————————————————————————————————————————————————————————————————————————————
@@ -134,25 +140,25 @@ void setup()
     pinMode(MOSDOWN_PIN, OUTPUT);
     pinMode(DRS_PIN, OUTPUT);
     pinMode(DynoInt, OUTPUT);
-    pinMode(DiagEN, INPUT);
     Serial.begin(115200);
     while (!Serial)
     {
         ;
     }
-
     delay(100);
+    TM1637_Init();
     DHT_TaskInit();
     ADS1115_Init();
     ADXL345_Init();
     MCP2515_Init();
+    blink(1000);
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
     Serial.println("*                    SKIDAQ           " + String(FW_Version) + "                          *");
     Serial.println("*                By ChaeWon Lim https://github.com/WonITKorea               *");
     Serial.println("*                       Based on Open-Ecu-Sim-OBD2-FW                        *");
     Serial.println("*                By Rick Spooner https://github.com/spoonieau                *");
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
-    blink(1000);
+    tm.display("OKAY");
     delay(3000);
 }
 
@@ -327,7 +333,7 @@ void loop()
                 delay(100);
             }
             //=================================================================
-            // Return CAN-BUS Messages - SUPPORTED PID's
+            // Return CAN-BUS Messages - SUPPORTED PIDs
             //=================================================================
 
             if (canMessageRead == "2,1,0,")
@@ -511,7 +517,7 @@ void loop()
 }
 
 // ——————————————————————————————————————————————————————————————————————————————
-//   Functions Configuration
+// Extra Functions Configuration
 // ——————————————————————————————————————————————————————————————————————————————
 void DHT_TaskInit(void)
 {
@@ -735,6 +741,12 @@ void MCP2515_Init(void)
     Serial.println("CAN Status: OK");
 }
 
+void TM1637_Init(void)
+{
+    tm.begin();
+    tm.setBrightnessPercent(90);
+}
+
 void blink(int deltime)
 {
     digitalWrite(LED_BUILTIN, HIGH);
@@ -743,7 +755,6 @@ void blink(int deltime)
     delay(deltime);
 }
 
-// Extra Configurations
 #ifndef ARDUINO_ARCH_RP2040
 #error "Select a Raspberry Pi Pico board"
 #endif
