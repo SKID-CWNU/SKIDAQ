@@ -1,191 +1,130 @@
-#include <TinyGPSPlus.h>
-#include <SoftwareSerial.h>
 /*
-   This sample sketch demonstrates the normal use of a TinyGPSPlus (TinyGPSPlus) object.
-   It requires the use of SoftwareSerial, and assumes that you have a
-   4800-baud serial GPS device hooked up on pins 4(rx) and 3(tx).
+  Reading lat, long and UTC time via UBX binary commands - no more NMEA parsing!
+  By: Paul Clark and Nathan Seidle
+  Using the library modifications provided by @blazczak and @geeksville
+
+  SparkFun Electronics
+  Date: June 16th, 2020
+  License: MIT. See license file for more information but you can
+  basically do whatever you want with this code.
+
+  This example shows how to query a Ublox module for its lat/long/altitude. We also
+  turn off the NMEA output on the I2C port. This decreases the amount of I2C traffic
+  dramatically.
+
+  Note: Long/lat are large numbers because they are * 10^7. To convert lat/long
+  to something google maps understands simply divide the numbers by 10,000,000. We
+  do this so that we don't have to use floating point numbers.
+
+  Leave NMEA parsing behind. Now you can simply ask the module for the datums you want!
+
+  Feel like supporting open source hardware?
+  Buy a board from SparkFun!
+  ZED-F9P RTK2: https://www.sparkfun.com/products/15136
+  NEO-M8P RTK: https://www.sparkfun.com/products/15005
+  SAM-M8Q: https://www.sparkfun.com/products/15106
+
+  Hardware Connections:
+  Plug a Qwiic cable into the GPS and a BlackBoard
+  If you don't have a platform with a Qwiic connection use the SparkFun Qwiic Breadboard Jumper (https://www.sparkfun.com/products/14425)
+  Open the serial monitor at 115200 baud to see the output
 */
-static const int RXPin = 3, TXPin = 4;
-static const uint32_t GPSBaud = 9600;
 
-// The TinyGPSPlus object
-TinyGPSPlus gps;
+#include <Wire.h> //Needed for I2C to GPS
 
-// The serial connection to the GPS device
-SoftwareSerial ss(RXPin, TXPin);
+#include "SparkFun_Ublox_Arduino_Library_Series_6_7.h"
+SFE_UBLOX_GPS myGPS;
 
-// For stats that happen every 5 seconds
-unsigned long last = 0UL;
+#include <SoftwareSerial.h>
+SoftwareSerial mySerial(10, 11); // RX, TX. Pin 10 on Uno goes to TX pin on GPS module.
+
+long lastTime = 0; // Simple local timer. Limits amount of I2C traffic to Ublox module.
 
 void setup()
 {
   Serial.begin(115200);
-  ss.begin(GPSBaud);
+  while (!Serial)
+    ; // Wait for user to open terminal
+  Serial.println("SparkFun Ublox Example");
 
-  Serial.println(F("KitchenSink.ino"));
-  Serial.println(F("Demonstrating nearly every feature of TinyGPSPlus"));
-  Serial.print(F("Testing TinyGPSPlus library v. ")); Serial.println(TinyGPSPlus::libraryVersion());
-  Serial.println(F("by Mikal Hart"));
-  Serial.println();
+  // Assume that the U-Blox GPS is running at 9600 baud (the default) or at 38400 baud.
+  // Loop until we're in sync and then ensure it's at 38400 baud.
+  do
+  {
+    Serial.println("GPS: trying 38400 baud");
+    mySerial.begin(38400);
+    if (myGPS.begin(mySerial) == true)
+      break;
+
+    delay(100);
+    Serial.println("GPS: trying 9600 baud");
+    mySerial.begin(9600);
+    if (myGPS.begin(mySerial) == true)
+    {
+      Serial.println("GPS: connected at 9600 baud, switching to 38400");
+      myGPS.setSerialRate(38400);
+      delay(100);
+    }
+    else
+    {
+      // myGPS.factoryReset();
+      delay(2000); // Wait a bit before trying again to limit the Serial output
+    }
+  } while (1);
+  Serial.println("GPS serial connected");
+
+  myGPS.setUART1Output(COM_TYPE_UBX); // Set the UART port to output UBX only
+  myGPS.setI2COutput(COM_TYPE_UBX);   // Set the I2C port to output UBX only (turn off NMEA noise)
+  myGPS.saveConfiguration();          // Save the current settings to flash and BBR
 }
 
 void loop()
 {
-  // Dispatch incoming characters
-  while (ss.available() > 0)
-    gps.encode(ss.read());
-
-  if (gps.location.isUpdated())
+  // Query module only every second. Doing it more often will just cause I2C traffic.
+  // The module only responds when a new position is available
+  if (millis() - lastTime > 1000)
   {
-    Serial.print(F("LOCATION   Fix Age="));
-    Serial.print(gps.location.age());
-    Serial.print(F("ms Raw Lat="));
-    Serial.print(gps.location.rawLat().negative ? "-" : "+");
-    Serial.print(gps.location.rawLat().deg);
-    Serial.print("[+");
-    Serial.print(gps.location.rawLat().billionths);
-    Serial.print(F(" billionths],  Raw Long="));
-    Serial.print(gps.location.rawLng().negative ? "-" : "+");
-    Serial.print(gps.location.rawLng().deg);
-    Serial.print("[+");
-    Serial.print(gps.location.rawLng().billionths);
-    Serial.print(F(" billionths],  Lat="));
-    Serial.print(gps.location.lat(), 6);
-    Serial.print(F(" Long="));
-    Serial.println(gps.location.lng(), 6);
-  }
+    lastTime = millis(); // Update the timer
 
-  else if (gps.date.isUpdated())
-  {
-    Serial.print(F("DATE       Fix Age="));
-    Serial.print(gps.date.age());
-    Serial.print(F("ms Raw="));
-    Serial.print(gps.date.value());
-    Serial.print(F(" Year="));
-    Serial.print(gps.date.year());
-    Serial.print(F(" Month="));
-    Serial.print(gps.date.month());
-    Serial.print(F(" Day="));
-    Serial.println(gps.date.day());
-  }
+    long latitude = myGPS.getLatitude();
+    Serial.print(F("Lat: "));
+    Serial.print(latitude);
 
-  else if (gps.time.isUpdated())
-  {
-    Serial.print(F("TIME       Fix Age="));
-    Serial.print(gps.time.age());
-    Serial.print(F("ms Raw="));
-    Serial.print(gps.time.value());
-    Serial.print(F(" Hour="));
-    Serial.print(gps.time.hour());
-    Serial.print(F(" Minute="));
-    Serial.print(gps.time.minute());
-    Serial.print(F(" Second="));
-    Serial.print(gps.time.second());
-    Serial.print(F(" Hundredths="));
-    Serial.println(gps.time.centisecond());
-  }
+    long longitude = myGPS.getLongitude();
+    Serial.print(F(" Long: "));
+    Serial.print(longitude);
+    Serial.print(F(" (degrees * 10^-7)"));
 
-  else if (gps.speed.isUpdated())
-  {
-    Serial.print(F("SPEED      Fix Age="));
-    Serial.print(gps.speed.age());
-    Serial.print(F("ms Raw="));
-    Serial.print(gps.speed.value());
-    Serial.print(F(" Knots="));
-    Serial.print(gps.speed.knots());
-    Serial.print(F(" MPH="));
-    Serial.print(gps.speed.mph());
-    Serial.print(F(" m/s="));
-    Serial.print(gps.speed.mps());
-    Serial.print(F(" km/h="));
-    Serial.println(gps.speed.kmph());
-  }
+    long altitude = myGPS.getAltitude();
+    Serial.print(F(" Alt: "));
+    Serial.print(altitude);
+    Serial.print(F(" (mm)"));
 
-  else if (gps.course.isUpdated())
-  {
-    Serial.print(F("COURSE     Fix Age="));
-    Serial.print(gps.course.age());
-    Serial.print(F("ms Raw="));
-    Serial.print(gps.course.value());
-    Serial.print(F(" Deg="));
-    Serial.println(gps.course.deg());
-  }
+    Serial.print(F(" Time: "));
 
-  else if (gps.altitude.isUpdated())
-  {
-    Serial.print(F("ALTITUDE   Fix Age="));
-    Serial.print(gps.altitude.age());
-    Serial.print(F("ms Raw="));
-    Serial.print(gps.altitude.value());
-    Serial.print(F(" Meters="));
-    Serial.print(gps.altitude.meters());
-    Serial.print(F(" Miles="));
-    Serial.print(gps.altitude.miles());
-    Serial.print(F(" KM="));
-    Serial.print(gps.altitude.kilometers());
-    Serial.print(F(" Feet="));
-    Serial.println(gps.altitude.feet());
-  }
-
-  else if (gps.satellites.isUpdated())
-  {
-    Serial.print(F("SATELLITES Fix Age="));
-    Serial.print(gps.satellites.age());
-    Serial.print(F("ms Value="));
-    Serial.println(gps.satellites.value());
-  }
-
-  else if (gps.hdop.isUpdated())
-  {
-    Serial.print(F("HDOP       Fix Age="));
-    Serial.print(gps.hdop.age());
-    Serial.print(F("ms raw="));
-    Serial.print(gps.hdop.value());
-    Serial.print(F(" hdop="));
-    Serial.println(gps.hdop.hdop());
-  }
-
-  else if (millis() - last > 5000)
-  {
-    Serial.println();
-    if (gps.location.isValid())
+    byte Hour = myGPS.getHour();
+    if (Hour < 10)
     {
-      static const double LONDON_LAT = 51.508131, LONDON_LON = -0.128002;
-      double distanceToLondon =
-        TinyGPSPlus::distanceBetween(
-          gps.location.lat(),
-          gps.location.lng(),
-          LONDON_LAT, 
-          LONDON_LON);
-      double courseToLondon =
-        TinyGPSPlus::courseTo(
-          gps.location.lat(),
-          gps.location.lng(),
-          LONDON_LAT, 
-          LONDON_LON);
-
-      Serial.print(F("LONDON     Distance="));
-      Serial.print(distanceToLondon/1000, 6);
-      Serial.print(F(" km Course-to="));
-      Serial.print(courseToLondon, 6);
-      Serial.print(F(" degrees ["));
-      Serial.print(TinyGPSPlus::cardinal(courseToLondon));
-      Serial.println(F("]"));
+      Serial.print(F("0"));
     }
+    Serial.print(Hour);
+    Serial.print(F(":"));
 
-    Serial.print(F("DIAGS      Chars="));
-    Serial.print(gps.charsProcessed());
-    Serial.print(F(" Sentences-with-Fix="));
-    Serial.print(gps.sentencesWithFix());
-    Serial.print(F(" Failed-checksum="));
-    Serial.print(gps.failedChecksum());
-    Serial.print(F(" Passed-checksum="));
-    Serial.println(gps.passedChecksum());
+    byte Minute = myGPS.getMinute();
+    if (Minute < 10)
+    {
+      Serial.print(F("0"));
+    }
+    Serial.print(Minute);
+    Serial.print(F(":"));
 
-    if (gps.charsProcessed() < 10)
-      Serial.println(F("WARNING: No GPS data.  Check wiring."));
+    byte Second = myGPS.getSecond();
+    if (Second < 10)
+    {
+      Serial.print(F("0"));
+    }
+    Serial.print(Second);
 
-    last = millis();
     Serial.println();
   }
 }
