@@ -4,7 +4,6 @@ Formula Digital Steering Wheel + Data Acquisition Sub-system Project
 Preparation for Korean Formula SAE Student(KSAE) 2024
 
 - Based on Two Raspberry Pi Pico - with Arduino IDE / PlatformIO
-- 4.3 inch TFT LCD with ESP32 on-wheel
 - DIY Data Acquisition Subsystem inspired from monolith by @luftaquila
 - DRS Control included
 - Hydraulic Valve Control via CAN Bus & Analog* Connection (*Safety Feature) 
