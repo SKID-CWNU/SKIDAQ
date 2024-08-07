@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Arduino",
-            "compilerPath": "C:\\Users\\wonit\\AppData\\Local\\Arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.1.0-a-d3d2e6b\\bin\\arm-none-eabi-g++",
+            "compilerPath": "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\bin\\arm-none-eabi-g++",
             "compilerArgs": [
                 "-I",
                 "-Werror=return-type",
@@ -17,18 +17,23 @@
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
-                "C:\\Users\\wonit\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.6.0\\include",
-                "C:\\Users\\wonit\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.6.0\\cores\\rp2040",
-                "C:\\Users\\wonit\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.6.0\\variants\\rpipico",
-                "c:\\users\\wonit\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.1.0-a-d3d2e6b\\arm-none-eabi\\include\\c++\\12.3.0",
-                "c:\\users\\wonit\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.1.0-a-d3d2e6b\\arm-none-eabi\\include\\c++\\12.3.0\\arm-none-eabi\\thumb",
-                "c:\\users\\wonit\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.1.0-a-d3d2e6b\\arm-none-eabi\\include\\c++\\12.3.0\\backward",
-                "c:\\users\\wonit\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.1.0-a-d3d2e6b\\lib\\gcc\\arm-none-eabi\\12.3.0\\include",
-                "c:\\users\\wonit\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.1.0-a-d3d2e6b\\lib\\gcc\\arm-none-eabi\\12.3.0\\include-fixed",
-                "c:\\users\\wonit\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.1.0-a-d3d2e6b\\arm-none-eabi\\include"
+                "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.9.4\\include",
+                "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.9.4\\cores\\rp2040",
+                "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.9.4\\variants\\rpipico",
+                "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.9.4\\libraries\\Wire\\src",
+                "C:\\Users\\user\\Documents\\Arduino\\libraries\\Rtc_by_Makuna\\src",
+                "C:\\Users\\user\\Documents\\Arduino\\libraries\\Adafruit_ADS1X15",
+                "C:\\Users\\user\\Documents\\Arduino\\libraries\\Adafruit_BusIO",
+                "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.9.4\\libraries\\SPI\\src",
+                "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\arm-none-eabi\\include\\c++\\12.3.0",
+                "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\arm-none-eabi\\include\\c++\\12.3.0\\arm-none-eabi\\thumb",
+                "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\arm-none-eabi\\include\\c++\\12.3.0\\backward",
+                "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\lib\\gcc\\arm-none-eabi\\12.3.0\\include",
+                "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\lib\\gcc\\arm-none-eabi\\12.3.0\\include-fixed",
+                "c:\\users\\user\\appdata\\local\\arduino15\\packages\\rp2040\\tools\\pqt-gcc\\2.2.0-d04e724\\arm-none-eabi\\include"
             ],
             "forcedInclude": [
-                "C:\\Users\\wonit\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.6.0\\cores\\rp2040\\Arduino.h"
+                "C:\\Users\\user\\AppData\\Local\\Arduino15\\packages\\rp2040\\hardware\\rp2040\\3.9.4\\cores\\rp2040\\Arduino.h"
             ],
             "cStandard": "c11",
             "cppStandard": "c++17",

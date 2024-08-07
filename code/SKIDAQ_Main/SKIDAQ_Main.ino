@@ -45,7 +45,7 @@
 #include <SoftwareSerial.h>
 #include "DFRobot_MCP2515.h"
 #include <SPI.h>
-#include <TM1637.h>
+
 #include <Wire.h>
 
 // ——————————————————————————————————————————————————————————————————————————————
@@ -103,7 +103,6 @@ int obled = LED_BUILTIN;          // On-Board LED for Basic Error Indication
 // Instantiation and pins configurations
 // Pin 7 - > DIO
 // Pin 6 - > CLK
-TM1637 tm(6, 7);
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    Functions Initalization
@@ -117,7 +116,7 @@ void ADXL345_displaySensorDetails(void);
 void ADXL345_displayDataRate(void);
 void ADXL345_displayRange(void);
 void MCP2515_Init(void);
-void TM1637_Init(void);
+
 void blink(int deltime);
 
 // ——————————————————————————————————————————————————————————————————————————————
@@ -146,19 +145,20 @@ void setup()
         ;
     }
     delay(100);
-    TM1637_Init();
+
     DHT_TaskInit();
     ADS1115_Init();
     ADXL345_Init();
     MCP2515_Init();
     blink(1000);
+    delay(1000);
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
     Serial.println("*                    SKIDAQ           " + String(FW_Version) + "                          *");
     Serial.println("*                By ChaeWon Lim https://github.com/WonITKorea               *");
     Serial.println("*                       Based on Open-Ecu-Sim-OBD2-FW                        *");
     Serial.println("*                By Rick Spooner https://github.com/spoonieau                *");
     Serial.println("——————————————————————————————————————————————————————————————————————————————");
-    tm.display("OKAY");
+
     delay(3000);
 }
 
@@ -739,12 +739,6 @@ void MCP2515_Init(void)
         blink(500);
     }
     Serial.println("CAN Status: OK");
-}
-
-void TM1637_Init(void)
-{
-    tm.begin();
-    tm.setBrightnessPercent(90);
 }
 
 void blink(int deltime)
