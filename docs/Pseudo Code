@@ -16,3 +16,8 @@ Data Acquisition Loop
   - IMU: 50ms
   - MOSFET: 25ms
   - Others(Rpi temp): 100ms
+
+Quickshift Event
+
+ • Upshift
+ • Downshift
