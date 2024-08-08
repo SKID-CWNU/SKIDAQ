@@ -1,5 +1,5 @@
 {
-    "sketch": "code\\Testing_Crate\\TestCode\\TestCode.ino",
+    "sketch": "code\\Testing_Crate\\I2C_Scanner\\I2C_Scanner.ino",
     "board": "rp2040:rp2040:rpipico",
     "port": "COM4",
     "output": "../build",

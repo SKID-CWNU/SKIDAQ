@@ -40,23 +40,11 @@
 #include <Adafruit_ADS1X15.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
-#include <DHT.h>
-#include <DHT_U.h>
 #include <SoftwareSerial.h>
 #include "DFRobot_MCP2515.h"
 #include <SPI.h>
-
 #include <Wire.h>
 
-// ——————————————————————————————————————————————————————————————————————————————
-//    DHT Temp/Humidity Sensor Configuration
-// ——————————————————————————————————————————————————————————————————————————————
-#define DHTPIN 10     // DHT Signal Pin
-#define DHTTYPE DHT22 // DHT Sensor type: DHT22
-DHT_Unified dht(DHTPIN, DHTTYPE);
-uint32_t delayMS;
-float temperature = 0.0; // defining global variable for using on CAN network
-float humidity = 0.0;
 
 // ——————————————————————————————————————————————————————————————————————————————
 //    CAN Interface Configuration
@@ -572,7 +560,7 @@ void ADS1115_Init(void)
     // ads.setGain(GAIN_FOUR);       // 4x gain   +/- 1.024V  1 bit = 0.5mV    0.03125mV
     // ads.setGain(GAIN_EIGHT);      // 8x gain   +/- 0.512V  1 bit = 0.25mV   0.015625mV
     // ads.setGain(GAIN_SIXTEEN);    // 16x gain  +/-
-    if (!ads.begin())
+    if (!ads.begin(0x))
     {
         Serial.println("Error: Check ADS1115 Wiring");
         while (1)
