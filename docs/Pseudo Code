@@ -1,0 +1,18 @@
+1. Comps
+Rpi Pico, CAN Transceiver, ADC Module, 9 axis module, GPS(NOT WORKING), MOSFET Switch(2, up, down), HDS Interpreter, RTC CLOCK, Telemetry(not used)
+
+2. Setup code
+Prepare all the components
+ - Specify all the I²C Address on all .begin() funcs
+ - SPI Int pin also needs to be specified
+ - Setup ADC Modes for each input
+ - CAN Bus will mirror HDS Message if possible
+ - Check SD Filesystem too
+
+Data Acquisition Loop
+ • Measurement Duty-cycle
+  - CAN: 25ms
+  - ADC: 50ms
+  - IMU: 50ms
+  - MOSFET: 25ms
+  - Others(Rpi temp): 100ms
