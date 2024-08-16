@@ -1,3 +1,13 @@
 {
+<<<<<<< HEAD
     "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main.ino"
+=======
+    "sketch": "code\\Testing_Crate\\I2C_Scanner\\I2C_Scanner.ino",
+    "board": "rp2040:rp2040:rpipico",
+    "port": "COM4",
+    "output": "../build",
+    "intelliSenseGen": "global",
+    "programmer": "esptool",
+    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
+>>>>>>> 1ece316d2c610311e825dece8bedf766fee009a8
 }

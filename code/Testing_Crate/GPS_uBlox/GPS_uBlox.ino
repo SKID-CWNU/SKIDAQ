@@ -36,7 +36,7 @@
 SFE_UBLOX_GPS myGPS;
 
 #include <SoftwareSerial.h>
-SoftwareSerial mySerial(10, 11); // RX, TX. Pin 10 on Uno goes to TX pin on GPS module.
+SoftwareSerial mySerial(3, 2); // RX, TX. Pin 10 on Uno goes to TX pin on GPS module.
 
 long lastTime = 0; // Simple local timer. Limits amount of I2C traffic to Ublox module.
 
