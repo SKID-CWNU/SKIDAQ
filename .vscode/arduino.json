@@ -1,9 +1,3 @@
 {
-    "sketch": "code\\Testing_Crate\\GPS_uBlox\\GPS_uBlox.ino",
-    "board": "rp2040:rp2040:rpipico",
-    "port": "COM7",
-    "output": "../build",
-    "intelliSenseGen": "global",
-    "programmer": "esptool",
-    "configuration": "flash=2097152_0,freq=133,opt=Optimize,rtti=Disabled,stackprotect=Enabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
+    "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main.ino"
 }

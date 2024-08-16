@@ -28,7 +28,7 @@ void loop() {
   static unsigned long timer = millis();
   static int deciSeconds = 0;
   
-  if (millis() - timer >= 100) {
+  if (millis() - timer >= 100) {9
     timer += 100;
     deciSeconds++; // 100 milliSeconds is equal to 1 deciSecond
     
