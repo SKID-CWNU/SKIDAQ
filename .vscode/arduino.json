@@ -1,5 +1,5 @@
 {
-    "sketch": "code\\SKIDAQ_Main\\SKIDAQ_Main.ino",
+    "sketch": "code\\SKIDASH_FND\\SKIDASH_FND.ino",
     "board": "rp2040:rp2040:rpipico",
     "port": "COM4"
 }
