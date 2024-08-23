@@ -10,16 +10,19 @@
  *  Arduino Tutorial - www.Ardumotive.com
  *  Dev: Michalis Vasilakis // Date: 31/1/2018 // Ver:1.0
  */
-#include <ShiftRegister74HC595.h>
-#include "DFRobot_MCP2515.h"
-#define SDI 7
-#define SCLK 6
-#define LOAD 5
-#define DIGITS 2
-#define SDI 7
-#define SCLK 6
-#define LOAD 5
-#define DIGITS 2
+
+#include <DFRobot_MCP2515.h>
+#include <ShiftDisplay2.h>
+
+const int LATCH_PIN = 6;
+const int CLOCK_PIN = 7;
+const int DATA_PIN = 5;
+const DisplayType DISPLAY_TYPE = COMMON_ANODE; // COMMON_CATHODE or COMMON_ANODE
+const int DISPLAY_SIZE = 5; // number of digits on display
+
+ShiftDisplay2 display(LATCH_PIN, CLOCK_PIN, DATA_PIN, DISPLAY_TYPE, DISPLAY_SIZE);
+
+
 
 const int SPI_CS_PIN = 17;
 DFRobot_MCP2515 CAN(SPI_CS_PIN); // Set CS pin
@@ -30,22 +33,7 @@ unsigned char buf[8];
 char str[20];
 String BuildMessage = "";
 // create shift register object (number of shift registers, data pin, clock pin, latch pin)
-ShiftRegister74HC595 sr(DIGITS, SDI, SCLK, LOAD);
-ShiftRegister74HC595 srw();
 
-int value, digit1, digit2, digit3, digit4;
-uint8_t digits[] = {
-    B11000000, // 0
-    B11111001, // 1
-    B10100100, // 2
-    B10110000, // 3
-    B10011001, // 4
-    B10010010, // 5
-    B10000010, // 6
-    B11111000, // 7
-    B10000000, // 8
-    B10010000  // 9
-};
 
 void setup()
 {
@@ -65,19 +53,6 @@ void setup()
 
 void loop()
 {
-    showNumber(18);
-    delay(2000); //
-    for (int i = 0; i <= 99; i++)
-    {
-        showNumber(i);
-        delay(100);
-    }
-    delay(2000);
-    for (int i = 99; i >= 0; i--)
-    {
-        showNumber(i);
-        delay(50);
-    }
     if (flagRecv)
     { // check if get data
 
@@ -171,21 +146,3 @@ void loop()
     }
     delay(2000);
 } // loop
-
-/*
- * @brief shows number on the Seven Segment Display
- * @param "num" is integer
- * @return returns none
- * Usage to show 18: showNumber(18);
- * Written by Ahmad Shamshiri on Sep 17, 2019.
- * in Ajax, Ontario, Canada
- * www.Robojax.com
- */
-void showNumber(int num)
-{
-    digit2 = num % 10;
-    digit1 = (num / 10) % 10;
-    // Send them to 7 segment displays
-    uint8_t numberToPrint[] = {digits[digit2], digits[digit1]};
-    sr.setAll(numberToPrint);
-}
