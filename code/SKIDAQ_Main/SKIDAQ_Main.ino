@@ -3,14 +3,14 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
 #include <SoftwareSerial.h>
-#include "DFRobot_MCP2515.h"
+#include <DFRobot_MCP2515.h>
 #include <RtcDS3231.h>
 #include <SPI.h>
 #include <Wire.h>
 
 // Comps
 // Rpi Pico, CAN Transceiver, ADC Module, 9 axis module, GPS(NOT WORKING)
-// MOSFET Switch(2, up, down), HDS Interpreter, RTC CLOCK, Telemetry(not used)
+// MOSFET Switch(2: up, down), HDS Interpreter, RTC CLOCK, Telemetry(not used)
 
 DFRobot_MCP2515 CAN(17); // Set CS to pin 17
 const int CAN_INT_PIN = 20;
