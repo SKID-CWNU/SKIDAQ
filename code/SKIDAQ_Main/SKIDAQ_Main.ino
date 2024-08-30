@@ -20,6 +20,10 @@ Adafruit_ADS1115 ads; /* ADS1115 - 16-bit version */
 
 RtcDS3231<TwoWire> Rtc(Wire);
 
+#define DynoPin 9
+#define MOSUP_PIN 12
+#define MOSDOWN_PIN 13
+
 char picoTemp = analogReadTemp(); // Pi Pico On-Board Temp Sensor
 int obled = LED_BUILTIN;          // On-Board LED for Basic Error Indication
 
@@ -30,12 +34,11 @@ void ADXL345_displaySensorDetails(void);
 void ADXL345_displayDataRate(void);
 void ADXL345_displayRange(void);
 void MCP2515_Init(void);
-
+void upShiftFunc(void);
+void downShiftFunc(void);
 void blink(int deltime);
 
-#define DynoInt 9
-#define MOSUP_PIN 12
-#define MOSDOWN_PIN 13
+
 
 void setup()
 {
@@ -43,7 +46,7 @@ void setup()
     pinMode(obled, OUTPUT);
     pinMode(MOSUP_PIN, OUTPUT);
     pinMode(MOSDOWN_PIN, OUTPUT);
-    pinMode(DynoInt, OUTPUT);
+    pinMode(DynoPin, OUTPUT);
     Serial.begin(115200);
     while (!Serial)
     {
@@ -52,6 +55,7 @@ void setup()
     ADS1115_Init();
     ADXL345_Init();
     MCP2515_Init();
+    digitalWrite(DynoPin, LOW);
     blink(1000);
     delay(1000);
 }
@@ -251,6 +255,22 @@ void MCP2515_Init(void)
         blink(500);
     }
     Serial.println("CAN Status: OK");
+}
+
+void upShiftFunc(int time) {
+    digitalWrite(MOSUP_PIN, HIGH);
+    digitalWrite(DynoPin, HIGH);
+    delay(time);
+    digitalWrite(MOSUP_PIN, LOW);
+    digitalWrite(DynoPin, LOW);
+}
+
+void downShiftFunc(int time) {
+    digitalWrite(MOSDOWN_PIN, HIGH);
+    digitalWrite(DynoPin, HIGH);
+    delay(time);
+    digitalWrite(MOSDOWN_PIN, LOW);
+    digitalWrite(DynoPin, LOW);
 }
 
 void blink(int deltime)
