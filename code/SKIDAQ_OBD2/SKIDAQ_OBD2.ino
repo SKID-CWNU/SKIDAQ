@@ -19,6 +19,8 @@
 
 #include "DFRobot_MCP2515.h"
 
+#define Upshiftpin 12
+13
 const int SPI_CS_PIN = 17;
 DFRobot_MCP2515 CAN(SPI_CS_PIN); // Set CS pin
 
@@ -30,6 +32,7 @@ String BuildMessage = "";
 
 void setup()
 {
+    pinMode()
     Serial.begin(115200);
 
     while (CAN.begin(CAN_500KBPS))
