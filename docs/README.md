@@ -7,6 +7,7 @@ Preparation for Korean Formula SAE Student(KSAE) 2024
 - DIY Data Acquisition Subsystem inspired from monolith by @luftaquila
 - DRS Control included
 - Hydraulic Valve Control via CAN Bus & Analog* Connection (*Safety Feature) 
-- IC Fuel-cut with DynoJet Powercommander V Quickshift trigger Detection
+- IC Fuel-cut with DynoJet Power Commander V(PCV)
+- Gear Position indicator by PCV with VS Sensor.
 
-SKIDAQ © 2024 by Lim ChaeWon is licensed under GPL 3.0
+SKIDAQ © 2024 by Lim ChaeWon is licensed under GPL 3.0.
