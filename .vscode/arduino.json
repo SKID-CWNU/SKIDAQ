@@ -1,6 +1,6 @@
 {
-    "sketch": "code\\Testing_Crate\\backup\\backup.ino",
-    "board": "rp2040:rp2040:rpipico",
+    "sketch": "code\\Testing_Crate\\GPSTest\\SKIDAQ_BreakOut.ino",
+    "board": "esp32:esp32:nodemcu-32s",
     "port": "COM13",
-    "configuration": "flash=2097152_0,freq=133,opt=Small,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,ipbtstack=ipv4only,uploadmethod=default"
+    "configuration": "FlashFreq=80,UploadSpeed=460800,DebugLevel=none,EraseFlash=none"
 }
