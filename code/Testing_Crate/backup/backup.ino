@@ -17,7 +17,7 @@
 
 #define upSW 12
 #define downSW 13
-#define drsSW 14
+
 
 DFRobot_MCP2515 CAN(17); // Set CS to pin 17
 const int CAN_INT_PIN = 20;
@@ -44,9 +44,8 @@ void setup()
     Serial.begin(115200);
     delay(1000);
 
-    pinMode(upSW, INPUT_PULLUP);
+    pinMode(upSW, INPUT_PULLDOWN    );
     pinMode(downSW, INPUT_PULLUP);
-    pinMode(drsSW, INPUT_PULLUP);
     while (CAN.begin(CAN_500KBPS))
     { // init can bus : baudrate = 500k
         Serial.println("CAN BUS Shield init fail");
@@ -59,8 +58,6 @@ void setup()
 static char buff[100];
 unsigned char up[8] = {0, 1, 1, 0, 0, 0, 0, 0};
 unsigned char down[8] = {0, 1, 2, 0, 0, 0, 0, 0};
-unsigned char drstrigon[8] = {0, 2, 1, 0, 0, 0, 0, 0};
-unsigned char drstrigoff[8] = {0, 2, 2, 0, 0, 0, 0, 0};
 unsigned char pidchk[8] = {2, 1, 0, 0, 0, 0, 0, 0};
 unsigned char milClr[8] = {2, 1, 1, 0, 0, 0, 0, 0};
 unsigned char coolTemp[8] = {2, 1, 5, 0, 0, 0, 0, 0};
@@ -74,11 +71,13 @@ void shiftMode()
     if (upval == 1 && downval == 0)
     {
         CAN.sendMsgBuf(0x00, 0, 8, up);
+        Serial.print("up");
         delay(400);
     }
     else if (upval == 0 && downval == 1)
     {
         CAN.sendMsgBuf(0x00, 0, 8, down);
+        Serial.print("down");
         delay(400);
     }
     else if (upval == downval)
@@ -87,24 +86,13 @@ void shiftMode()
     }
 }
 
-void drsMode()
-{
-    int drsval = digitalRead(drsSW);
-    if (drsval == 1)
-    {
-        CAN.sendMsgBuf(0x00, 0, 8, drstrigon);
-        delay(50);
-    } else if (drsval == 0) {
-         CAN.sendMsgBuf(0x00, 0, 8, drstrigoff);
-        delay(50);
-    }
-}
+
 
 void loop()
 {
 
     shiftMode();
-    drsMode();
+
     delay(50);
     char Order = Serial.read();
     if (Order == '1')

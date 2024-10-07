@@ -26,7 +26,7 @@ ShiftDisplay2 display(LATCH_PIN, CLOCK_PIN, DATA_PIN, DISPLAY_TYPE, DISPLAY_SIZE
 
 const int SPI_CS_PIN = 17;
 DFRobot_MCP2515 CAN(SPI_CS_PIN); // Set CS pin
-
+long unsigned int canId = 0x000;
 unsigned char flagRecv = 0;
 unsigned char len = 0;
 unsigned char buf[8];
@@ -50,7 +50,10 @@ void setup()
     attachInterrupt(20, MCP2515_ISR, FALLING); // start interrupt
     delay(3000);
 }
-
+void MCP2515_ISR()
+{
+    flagRecv = 1;
+}
 void loop()
 {
     if (flagRecv)
