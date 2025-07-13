@@ -1,7 +1,8 @@
-# SKIDAQ: DAQ Subsystem for SKID
+# [EOL] SKIDAQ: DAQ Subsystem for SKID
 Formula Digital Steering Wheel + Data Acquisition Sub-system Project
 
 Since. Formula Student Korea 2024(FSK 2024)
+Project Discontinued due to Engine Head Crack
 
 - Based on Two Raspberry Pi Pico - with Arduino IDE / PlatformIO
 - DIY Data Acquisition Subsystem inspired from monolith by @luftaquila
